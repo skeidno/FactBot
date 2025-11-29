@@ -22,18 +22,43 @@ enum Route {
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/styling/main.css");
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
+const HEAD_STYLE: &str = r#"
+    <style>
+        html, body, #main {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            overscroll-behavior: contain;
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        #main::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
+        }
+    </style>
+"#;
 
 /// 桌面端：使用 dioxus_desktop::launch::launch + Config 做无边框窗口
 #[cfg(feature = "desktop")]
 fn main() {
-    use dioxus_desktop::{Config, WindowBuilder};
+    use dioxus_desktop::{Config, WindowBuilder, LogicalSize};
     use dioxus_desktop::launch::launch as desktop_launch;
 
-    let cfg = Config::new().with_window(
-        WindowBuilder::new()
-            .with_title("FactBot 面板")
-            .with_decorations(false), // 关闭系统边框和菜单栏
-    );
+    let window = WindowBuilder::new()
+        .with_title("FactBot 面板")
+        .with_decorations(false) // 关闭系统边框和菜单栏
+        .with_transparent(false) // 允许自定义背景覆盖整个窗口
+        .with_inner_size(LogicalSize::new(1260.0, 900.0))
+        .with_min_inner_size(LogicalSize::new(1120.0, 780.0));
+
+    let cfg = Config::new()
+        .with_window(window)
+        .with_custom_head(HEAD_STYLE.to_string())
+        .with_background_color((2, 6, 23, 255)); // 统一 WebView 背景色，与 UI 深色主题一致
 
     // contexts 使用默认空向量即可
     desktop_launch(App, Vec::new(), vec![Box::new(cfg)]);

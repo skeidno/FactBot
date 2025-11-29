@@ -6,7 +6,9 @@ use dioxus::prelude::*;
 pub fn Home() -> Element {
     rsx! {
         div {
-            style: "min-height:100%; display:flex; align-items:center; justify-content:center; padding:48px; background:radial-gradient(circle at top,#eef2ff,#fef2f2);",
+            // 与右侧深色内容区域融合：自身背景透明，只作为内边距容器
+            style: "height:100%; display:flex; align-items:center; justify-content:center; padding:48px; box-sizing:border-box; overflow:hidden;",
+            // 中间白色卡片保留原来样式
             div {
                 style: "max-width:720px; width:100%; background:white; border-radius:28px; padding:48px; box-shadow:0 25px 60px rgba(79,70,229,0.15); text-align:center;",
                 span {
