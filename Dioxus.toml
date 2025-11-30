@@ -5,6 +5,9 @@ name = "fact-bot"
 # Application icon (for desktop builds)
 icon = "assets/favicon.ico"
 
+# Asset directory for desktop builds
+asset_dir = "assets"
+
 [web.app]
 
 # HTML title tag content

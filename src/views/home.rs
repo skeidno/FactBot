@@ -10,23 +10,14 @@ pub fn Home() -> Element {
         div {
             style: "height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px; box-sizing:border-box; overflow:auto;",
             
-            // Logo 区域 - 使用 header.svg
-            div {
-                style: "width:100%; max-width:800px; margin-bottom:40px; display:flex; justify-content:center;",
-                img {
-                    src: HEADER_SVG,
-                    alt: "FactBot Logo",
-                    style: "width:100%; height:auto; max-width:700px; filter:drop-shadow(0 20px 40px rgba(99,102,241,0.3));",
-                }
-            }
-            
             // 内容卡片
             div {
                 style: "max-width:720px; width:100%; background:linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95)); border-radius:28px; padding:48px; box-shadow:0 25px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(148,163,184,0.1); text-align:center; backdrop-filter:blur(20px);",
                 
-                span {
-                    style: "display:inline-flex; padding:8px 18px; border-radius:999px; background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(34,211,238,0.2)); color:#22d3ee; font-size:13px; font-weight:600; border:1px solid rgba(34,211,238,0.3);",
-                    "🤖 欢迎来到 FactBot · 数据运维助手"
+                img {
+                    src: HEADER_SVG,
+                    alt: "FactBot · 数据运维助手",
+                    style: "max-width:100%; height:auto; margin-bottom:8px;"
                 }
                 
                 h1 {
