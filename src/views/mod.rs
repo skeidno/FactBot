@@ -8,3 +8,9 @@ mod airline;
 pub use airline::Airline;
 mod config;
 pub use config::Config;
+
+mod notice;
+pub use notice::Notice;
+
+mod help;
+pub use help::Help;

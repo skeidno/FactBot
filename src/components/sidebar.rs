@@ -32,16 +32,13 @@ pub fn Sidebar() -> Element {
                         SidebarIcon { icon: "🏠", label: "首页", to: Some(Route::Home {}) }
                         SidebarIcon { icon: "✈️", label: "航司报价", to: Some(Route::Airline {}) }
                         SidebarIcon { icon: "⚙️", label: "配置管理", to: Some(Route::Config {}) }
-                        SidebarIcon { icon: "🛰️", label: "可用服务", to: None }
-                        SidebarIcon { icon: "🧰", label: "注册机", to: None }
-                        SidebarIcon { icon: "🔐", label: "验证码", to: None }
                     }
 
-                    // 底部辅助图标（帮助、设置等）
+                    // 底部辅助图标（帮助、通知等）
                     div {
                         style: "display:flex; flex-direction:column; align-items:center; gap:10px; padding-top:12px; border-top:1px solid rgba(30,41,59,0.65); width:100%; padding-inline:8px;",
-                        SidebarIcon { icon: "❓", label: "帮助", to: None }
-                        SidebarIcon { icon: "🔔", label: "通知", to: None }
+                        SidebarIcon { icon: "🔔", label: "通知", to: Some(Route::Notice {}) }
+                        SidebarIcon { icon: "❓", label: "帮助", to: Some(Route::Help {}) }
                     }
                 }
 

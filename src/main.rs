@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use views::{Airline, Blog, Home, Config};
+use views::{Airline, Blog, Home, Config, Notice, Help};
 use components::Sidebar;
 
 mod components;
@@ -14,12 +14,16 @@ enum Route {
     #[layout(Sidebar)]
         #[route("/")]
         Home {},
+        #[route("/config")]
+        Config {},
         #[route("/blog/:id")]
         Blog { id: i32 },
         #[route("/airlines")]
         Airline {},
-        #[route("/config")]
-        Config {},
+        #[route("/notice")]
+        Notice {},
+        #[route("/help")]
+        Help {},
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
@@ -81,5 +85,20 @@ fn App() -> Element {
         document::Link { rel: "stylesheet", href: TAILWIND_CSS }
 
         Router::<Route> {}
+        
+        // 在 Router 之后检查首次启动
+        FirstLaunchHandler {}
     }
+}
+
+#[component]
+fn FirstLaunchHandler() -> Element {
+    use_effect(move || {
+        if db::is_first_launch() {
+            let nav = navigator();
+            nav.replace(Route::Home {});
+        }
+    });
+    
+    rsx! {}
 }

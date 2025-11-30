@@ -53,3 +53,14 @@ pub fn load_config(key: &str) -> Result<Option<String>> {
         Ok(None)
     }
 }
+
+pub fn is_first_launch() -> bool {
+    match load_config("app_launched") {
+        Ok(Some(_)) => false,
+        _ => {
+            // 标记应用已启动
+            let _ = save_config("app_launched", "true");
+            true
+        }
+    }
+}

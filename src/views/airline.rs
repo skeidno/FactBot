@@ -1,4 +1,22 @@
 use dioxus::prelude::*;
+use serde::{Deserialize, Serialize};
+use crate::db::load_config;
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+struct ProxyConfig {
+    id: usize,
+    ip: String,
+    port: String,
+    username: String,
+    password: String,
+}
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+struct ProxyGroup {
+    id: usize,
+    name: String,
+    proxies: Vec<ProxyConfig>,
+}
 
 const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
@@ -188,13 +206,19 @@ struct AirlineOption {
 
 #[component]
 pub fn Airline() -> Element {
-    let mut proxy_ip = use_signal(|| "127.0.0.1".to_string());
-    let mut proxy_port = use_signal(|| "7897".to_string());
-    let mut proxy_username = use_signal(|| "".to_string());
-    let mut proxy_password = use_signal(|| "".to_string());
+    // 加载代理分组
+    let proxy_groups = use_signal(|| {
+        load_config("proxy_groups")
+            .ok()
+            .flatten()
+            .and_then(|json| serde_json::from_str::<Vec<ProxyGroup>>(&json).ok())
+            .unwrap_or_default()
+    });
+
+    let mut selected_group_index = use_signal(|| 0usize);
     let mut token = use_signal(|| "".to_string());
     let mut selected_code = use_signal(|| AIRLINE_OPTIONS[0].code.to_string());
-    let mut test_message = use_signal(|| "尚未测试连接".to_string());
+    let test_message = use_signal(|| "尚未测试连接".to_string());
     let mut query_result = use_signal(|| "".to_string());
     let mut is_querying = use_signal(|| false);
 
@@ -203,7 +227,12 @@ pub fn Airline() -> Element {
         .find(|option| option.code == selected_code())
         .unwrap_or(&AIRLINE_OPTIONS[0]);
 
-    // 动态生成完整的请求数据用于预览
+    // 获取当前选中的代理分组（使用 memo 避免重复计算）
+    let current_group = use_memo(move || {
+        proxy_groups().get(selected_group_index()).cloned()
+    });
+
+    // 动态生成完整的请求数据用于预览（使用分组中第一个代理作为示例）
     let request_preview = use_memo(move || {
         use std::time::{SystemTime, UNIX_EPOCH};
         let timestamp = SystemTime::now()
@@ -212,30 +241,46 @@ pub fn Airline() -> Element {
             .as_millis();
         let pool = ((timestamp % 9000) + 1000) as i32;
         
+        let (proxy_ip, proxy_port, proxy_user, proxy_pass) = if let Some(group) = proxy_groups().get(selected_group_index()) {
+            if let Some(proxy) = group.proxies.first() {
+                (proxy.ip.clone(), proxy.port.clone(), proxy.username.clone(), proxy.password.clone())
+            } else {
+                ("".to_string(), "".to_string(), "".to_string(), "".to_string())
+            }
+        } else {
+            ("".to_string(), "".to_string(), "".to_string(), "".to_string())
+        };
+        
+        // 转义 searchParams 为字符串
+        let search_params_str = current_airline.request_preview
+            .replace('\n', "")
+            .replace("  ", "")
+            .replace("\"", "\\\"");
+        
         format!(
             r#"{{
-    "air_type": "{}",
-    "analysis": true,
-    "token": "{}",
-    "data": {{
-        "pool": {},
-        "proxy_config": {{
-            "proxyUser": "{}",
-            "proxyPass": "{}",
-            "proxyHost": "{}",
-            "proxyPort": "{}"
-        }},
-        "searchParams": {}
-    }}
+  "air_type": "{}",
+  "analysis": true,
+  "token": "{}",
+  "data": {{
+    "pool": {},
+    "proxy_config": {{
+      "proxyUser": "{}",
+      "proxyPass": "{}",
+      "proxyHost": "{}",
+      "proxyPort": "{}"
+    }},
+    "searchParams": "{}"
+  }}
 }}"#,
             selected_code(),
             token(),
             pool,
-            proxy_username(),
-            proxy_password(),
-            proxy_ip(),
-            proxy_port(),
-            current_airline.request_preview
+            proxy_user,
+            proxy_pass,
+            proxy_ip,
+            proxy_port,
+            search_params_str
         )
     });
 
@@ -295,47 +340,44 @@ pub fn Airline() -> Element {
                     }
                     p {
                         style: "margin:0 0 24px 0; font-size:14px; color:#6b7280; line-height:1.5;",
-                        "配置代理信息、认证凭证以及测试连接状态"
+                        "选择代理分组和配置认证凭证"
                     }
 
-                    // 第一行：代理 IP 和端口
+                    // 代理分组和 Token 配置（一行）
                     div {
-                        style: "display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:16px;",
-                        FormField {
-                            label: "代理 IP 地址",
-                            value: proxy_ip(),
-                            placeholder: "例：127.0.0.1",
-                            onchange: move |value| proxy_ip.set(value),
+                        style: "display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;",
+                        
+                        // 代理分组选择
+                        div {
+                            label {
+                                style: "display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:8px;",
+                                "代理分组"
+                            }
+                            if proxy_groups().is_empty() {
+                                div {
+                                    style: "padding:11px 14px; border-radius:10px; background:#fef3c7; border:1px solid #fbbf24; color:#92400e; font-size:13px;",
+                                    "⚠️ 暂无代理"
+                                }
+                            } else {
+                                select {
+                                    style: "width:100%; padding:11px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:white;",
+                                    value: selected_group_index().to_string(),
+                                    onchange: move |evt| {
+                                        if let Ok(index) = evt.value().parse::<usize>() {
+                                            selected_group_index.set(index);
+                                        }
+                                    },
+                                    for (index, group) in proxy_groups().iter().enumerate() {
+                                        option {
+                                            value: "{index}",
+                                            "{group.name} ({group.proxies.len()} 个)"
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        FormField {
-                            label: "代理端口",
-                            value: proxy_port(),
-                            placeholder: "例：7897",
-                            onchange: move |value| proxy_port.set(value),
-                        }
-                    }
-
-                    // 第二行：用户名和密码
-                    div {
-                        style: "display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;",
-                        FormField {
-                            label: "用户名",
-                            value: proxy_username(),
-                            placeholder: "可选",
-                            onchange: move |value| proxy_username.set(value),
-                        }
-                        FormField {
-                            label: "密码",
-                            value: proxy_password(),
-                            placeholder: "可选",
-                            onchange: move |value| proxy_password.set(value),
-                            input_type: "password",
-                        }
-                    }
-
-                    // 第三行：Token
-                    div {
-                        style: "margin-bottom:20px;",
+                        
+                        // Token 配置
                         FormField {
                             label: "认证 Token",
                             value: token(),
@@ -347,15 +389,6 @@ pub fn Airline() -> Element {
                     // 操作按钮行
                     div {
                         style: "display:flex; gap:12px; align-items:center; padding-top:8px; border-top:1px solid #f3f4f6;",
-                        button {
-                            style: BUTTON_PRIMARY_STYLE,
-                            onclick: move |_| {
-                                test_message.set(format!(
-                                    "正在测试代理 {}:{}...", proxy_ip(), proxy_port()
-                                ));
-                            },
-                            "测试代理连接"
-                        }
                         button {
                             style: BUTTON_SECONDARY_STYLE,
                             "校验 Token"
@@ -404,12 +437,67 @@ pub fn Airline() -> Element {
                                 is_querying.set(true);
                                 query_result.set("正在发送查询请求...".to_string());
                                 
-                                // 复制当前的请求数据用于查询
-                                let request_data = request_preview();
+                                // 从当前分组中随机选择一个代理
+                                let (proxy_ip, proxy_port, proxy_user, proxy_pass) = if let Some(group) = proxy_groups().get(selected_group_index()) {
+                                    if !group.proxies.is_empty() {
+                                        use std::time::{SystemTime, UNIX_EPOCH};
+                                        let timestamp = SystemTime::now()
+                                            .duration_since(UNIX_EPOCH)
+                                            .unwrap()
+                                            .as_millis();
+                                        let random_index = (timestamp as usize) % group.proxies.len();
+                                        let proxy = &group.proxies[random_index];
+                                        (proxy.ip.clone(), proxy.port.clone(), proxy.username.clone(), proxy.password.clone())
+                                    } else {
+                                        ("".to_string(), "".to_string(), "".to_string(), "".to_string())
+                                    }
+                                } else {
+                                    ("".to_string(), "".to_string(), "".to_string(), "".to_string())
+                                };
+                                
+                                // 生成随机 pool
+                                use std::time::{SystemTime, UNIX_EPOCH};
+                                let timestamp = SystemTime::now()
+                                    .duration_since(UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_millis();
+                                let pool = ((timestamp % 9000) + 1000) as i32;
+                                
+                                // 转义 searchParams 为字符串
+                                let search_params_str = current_airline.request_preview
+                                    .replace('\n', "")
+                                    .replace("  ", "")
+                                    .replace("\"", "\\\"");
+                                
+                                // 构建请求数据
+                                let request_data = format!(
+                                    r#"{{
+  "air_type": "{}",
+  "analysis": true,
+  "token": "{}",
+  "data": {{
+    "pool": {},
+    "proxy_config": {{
+      "proxyUser": "{}",
+      "proxyPass": "{}",
+      "proxyHost": "{}",
+      "proxyPort": "{}"
+    }},
+    "searchParams": "{}"
+  }}
+}}"#,
+                                    selected_code(),
+                                    token(),
+                                    pool,
+                                    proxy_user,
+                                    proxy_pass,
+                                    proxy_ip,
+                                    proxy_port,
+                                    search_params_str
+                                );
                                 
                                 // TODO: 这里可以添加实际的 API 调用
-                                // 目前只是模拟显示结果
-                                query_result.set(format!("✓ 查询请求已发送\n\n使用的请求数据：\n{}", request_data));
+                                query_result.set(format!("✓ 查询请求已发送\n\n随机选择的代理：{}:{}\n\n完整请求数据：\n{}", proxy_ip, proxy_port, request_data));
                                 is_querying.set(false);
                             },
                             if is_querying() { "查询中..." } else { "立即查询" }
@@ -424,11 +512,15 @@ pub fn Airline() -> Element {
                         }
                         InfoTile {
                             label: "Token",
-                            value: token(),
+                            value: if token().is_empty() { "未配置".to_string() } else { "已配置".to_string() },
                         }
                         InfoTile {
-                            label: "代理地址",
-                            value: format!("{}:{}", proxy_ip(), proxy_port()),
+                            label: "代理分组",
+                            value: if let Some(group) = current_group() {
+                                format!("{} ({} 个)", group.name, group.proxies.len())
+                            } else {
+                                "未选择".to_string()
+                            },
                         }
                     }
 
