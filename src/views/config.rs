@@ -399,7 +399,7 @@ fn ProxyGroupEditor(group: ProxyGroup, group_index: usize, proxy_groups: Signal<
             } else {
                 div {
                     style: "text-align:center; padding:40px; color:#6b7280; font-size:14px; background:white; border-radius:12px; border:1px dashed #d1d5db;",
-                    "暂无代理配置，点击"批量导入"开始配置"
+                    "暂无代理配置，点击「批量导入」开始配置"
                 }
             }
 
@@ -775,7 +775,7 @@ fn OtpGroupEditor(group: OtpGroup, group_index: usize, otp_groups: Signal<Vec<Ot
             } else {
                 div {
                     style: "text-align:center; padding:40px; color:#92400e; font-size:14px; background:white; border-radius:12px; border:1px dashed #fbbf24;",
-                    "暂无 OTP 配置，点击"添加配置"开始配置"
+                    "暂无 OTP 配置，点击「添加配置」开始配置"
                 }
             }
 
@@ -1043,7 +1043,7 @@ fn CardGroupEditor(group: CardGroup, group_index: usize, card_groups: Signal<Vec
                 if group.cards.is_empty() {
                     div {
                         style: "text-align:center; padding:40px; color:#92400e; font-size:14px;",
-                        "暂无卡片配置，点击"添加卡片"开始配置"
+                        "暂无卡片配置，点击「添加卡片」开始配置"
                     }
                 }
             }
@@ -1329,7 +1329,7 @@ fn PassengerGroupEditor(group: PassengerGroup, group_index: usize, passenger_gro
                 if group.passengers.is_empty() {
                     div {
                         style: "text-align:center; padding:40px; color:#1e3a8a; font-size:14px;",
-                        "暂无购票人信息，点击"添加购票人"开始配置"
+                        "暂无购票人信息，点击「添加购票人」开始配置"
                     }
                 }
             }
