@@ -1,10 +1,11 @@
 use dioxus::prelude::*;
 
-use views::{Airline, Blog, Home};
+use views::{Airline, Blog, Home, Config};
 use components::Sidebar;
 
 mod components;
 mod views;
+mod db;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
@@ -17,6 +18,8 @@ enum Route {
         Blog { id: i32 },
         #[route("/airlines")]
         Airline {},
+        #[route("/config")]
+        Config {},
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");

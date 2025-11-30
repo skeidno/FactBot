@@ -6,3 +6,5 @@ pub use blog::Blog;
 
 mod airline;
 pub use airline::Airline;
+mod config;
+pub use config::Config;

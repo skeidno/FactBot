@@ -1,59 +1,196 @@
-# Development
+# FactBot 控制台
 
-Your new jumpstart project includes basic organization with an organized `assets` folder and a `components` folder.
-If you chose to develop with the router feature, you will also have a `views` folder.
+FactBot 是一个基于 Dioxus 0.7 构建的数据运维助手，提供航司报价查询、配置管理等功能的统一工作台。
+
+## 功能特性
+
+### 🏠 首页
+- 产品介绍和快速导航
+- 引导用户进入各功能模块
+
+### ✈️ 航司报价查询
+- **支持 16 家航司**：美国航空、白俄罗斯航空、飞狮航空、越捷航空、维珍航空、韩亚航空、巴拿马航空、乌拉尔航空、西伯利亚航空、伊拉克航空、俄罗斯国际航空、北风航空、皇雀航空、马来西亚国际航空、宿务航空
+- **统一配置界面**：代理IP、端口、用户名、密码、Token 一站式配置
+- **实时预览**：配置修改后实时更新完整请求数据
+- **一键查询**：自动组合请求参数，支持 API 调用
+- **动态参数**：根据选择的航司自动切换查询参数模板
+
+### ⚙️ 配置管理中心
+支持四大配置模块，采用分组管理方式：
+
+#### 1. 代理配置（支持分组批量管理）
+- **批量导入**：支持多行格式导入
+  - 格式：`ip:port:username:password` 或 `ip:port`
+  - 每行一个代理，自动解析
+- **表格展示**：清晰的表格形式展示所有代理
+- **分组管理**：创建多个分组（如"美国代理"、"欧洲代理"）
+- **实时编辑**：表格内直接编辑，无需额外弹窗
+- **批量保存**：一次性保存整个分组的所有配置
+
+#### 2. OTP 邮箱服务（全局唯一配置）
+- 邮箱地址配置
+- API Key 管理
+- 服务提供商设置
+- 测试连接功能
+
+#### 3. 支付卡片配置（支持分组批量管理）
+- 支持信用卡和礼品卡
+- 分组管理多张卡片
+- 卡号、CVV、有效期、持卡人信息
+- 批量保存功能
+
+#### 4. 购票人信息（支持分组批量管理）
+- 分组管理多个购票人
+- 姓名、邮箱、电话、护照信息
+- 批量保存功能
+
+## 技术栈
+
+- **框架**：Dioxus 0.7
+- **语言**：Rust
+- **UI**：自定义 CSS + 渐变设计
+- **路由**：Dioxus Router
+- **状态管理**：Signal
+
+## 项目结构
 
 ```
-project/
-├─ assets/ # Any assets that are used by the app should be placed here
+FactBot/
+├─ assets/                    # 静态资源
+│  ├─ favicon.ico
+│  ├─ header.svg
+│  └─ styling/               # 样式文件
+│     ├─ main.css
+│     ├─ navbar.css
+│     └─ ...
 ├─ src/
-│  ├─ main.rs # The entrypoint for the app. It also defines the routes for the app.
-│  ├─ components/
-│  │  ├─ mod.rs # Defines the components module
-│  │  ├─ hero.rs # The Hero component for use in the home page
-│  │  ├─ echo.rs # The echo component uses server functions to communicate with the server
-│  ├─ views/ # The views each route will render in the app.
-│  │  ├─ mod.rs # Defines the module for the views route and re-exports the components for each route
-│  │  ├─ blog.rs # The component that will render at the /blog/:id route
-│  │  ├─ home.rs # The component that will render at the / route
-├─ Cargo.toml # The Cargo.toml file defines the dependencies and feature flags for your project
+│  ├─ main.rs                # 应用入口，路由定义
+│  ├─ components/            # 可复用组件
+│  │  ├─ mod.rs
+│  │  └─ sidebar.rs          # 侧边栏导航组件
+│  └─ views/                 # 页面视图
+│     ├─ mod.rs
+│     ├─ home.rs             # 首页
+│     ├─ airline.rs          # 航司报价页面
+│     ├─ config.rs           # 配置管理页面
+│     └─ blog.rs             # 博客页面
+├─ Cargo.toml                # Rust 依赖配置
+├─ Dioxus.toml              # Dioxus 配置
+└─ README.md
 ```
 
-### Automatic Tailwind (Dioxus 0.7+)
+## 快速开始
 
-As of Dioxus 0.7, there no longer is a need to manually install tailwind. Simply `dx serve` and you're good to go!
+### 环境要求
 
-Automatic tailwind is supported by checking for a file called `tailwind.css` in your app's manifest directory (next to Cargo.toml). To customize the file, use the dioxus.toml:
+- Rust 1.70+
+- Dioxus CLI
 
-```toml
-[application]
-tailwind_input = "my.css"
-tailwind_output = "assets/out.css"
-```
-
-### Tailwind Manual Install
-
-To use tailwind plugins or manually customize tailwind, you can can install the Tailwind CLI and use it directly.
-
-1. Install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
-2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation/tailwind-cli
-3. Run the following command in the root of the project to start the Tailwind CSS compiler:
+### 安装 Dioxus CLI
 
 ```bash
-npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --watch
+curl -sSL http://dioxus.dev/install.sh | sh
 ```
 
-### Serving Your App
+### 运行项目
 
-Run the following command in the root of your project to start developing with the default platform:
+#### 桌面应用（推荐）
 
 ```bash
 dx serve --platform desktop
 ```
 
-To run for a different platform, use the `--platform platform` flag. E.g.
+#### Web 应用
+
 ```bash
-dx serve --platform desktop
+dx serve --platform web
 ```
 
+### 构建发布版本
 
+```bash
+dx build --release --platform desktop
+```
+
+## 使用指南
+
+### 航司报价查询
+
+1. 在侧边栏点击 ✈️ 图标进入航司报价页面
+2. 配置代理信息（IP、端口、用户名、密码）
+3. 输入认证 Token
+4. 选择目标航司
+5. 查看实时更新的完整请求数据
+6. 点击"立即查询"发送请求
+
+### 配置管理
+
+1. 在侧边栏点击 ⚙️ 图标进入配置管理页面
+2. 选择需要配置的模块（代理/OTP/卡片/购票人）
+3. 创建分组（OTP 除外）
+4. 批量导入或逐个添加配置
+5. 点击"保存分组配置"保存
+
+#### 代理批量导入示例
+
+```
+127.0.0.1:7897:user1:pass1
+192.168.1.1:8080:user2:pass2
+10.0.0.1:3128
+```
+
+## 界面特性
+
+- **深色主题**：专业的深色配色方案
+- **渐变设计**：现代化的渐变背景和按钮
+- **响应式布局**：适配不同屏幕尺寸
+- **自定义滚动条**：美观的细窄滚动条
+- **悬浮提示**：侧边栏图标悬浮显示功能名称
+- **表格编辑**：配置管理支持表格内直接编辑
+- **模态弹窗**：批量导入使用模态窗口
+
+## 开发说明
+
+### 添加新航司
+
+在 `src/views/airline.rs` 的 `AIRLINE_OPTIONS` 中添加：
+
+```rust
+AirlineOption {
+    code: "XX",
+    name: "航司名称",
+    url: "https://example.com",
+    request_preview: r#"{
+    "param1": "value1",
+    "param2": "value2"
+}"#,
+}
+```
+
+### 自定义样式
+
+主要样式文件位于 `assets/styling/main.css`，可根据需要修改。
+
+### 添加新路由
+
+1. 在 `src/main.rs` 的 `Route` 枚举中添加路由
+2. 在 `src/views/` 创建对应的视图组件
+3. 在 `src/components/sidebar.rs` 添加导航按钮
+
+## 特性亮点
+
+- ✅ 无编译警告
+- ✅ 类型安全的状态管理
+- ✅ 组件化设计
+- ✅ 实时响应式更新
+- ✅ 批量操作支持
+- ✅ 表格化数据展示
+- ✅ 友好的用户体验
+
+## 许可证
+
+MIT License
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！

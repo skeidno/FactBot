@@ -17,33 +17,31 @@ pub fn Sidebar() -> Element {
 
                 // 左侧窄侧边栏（仅图标）
                 div {
-                    style: "width:clamp(64px, 7vw, 82px); background:linear-gradient(195deg,rgba(15,23,42,0.95),rgba(2,6,23,0.8)); color:#f8fafc; display:flex; flex-direction:column; align-items:center; padding:clamp(10px,1.4vw,16px) 0; border-right:1px solid rgba(148,163,184,0.12); gap:clamp(8px,1.5vw,14px);",
+                    style: "width:80px; background:linear-gradient(195deg,rgba(15,23,42,0.95),rgba(2,6,23,0.8)); color:#f8fafc; display:flex; flex-direction:column; align-items:center; padding:16px 0; border-right:1px solid rgba(148,163,184,0.12); gap:12px;",
 
                     // 顶部 Logo
                     div {
-                        style: "width:clamp(32px,4.2vw,44px); height:clamp(32px,4.2vw,44px); border-radius:16px; background:linear-gradient(135deg,#6366f1,#22d3ee); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:clamp(14px,1.8vw,18px); color:#0f172a; box-shadow:0 12px 30px rgba(14,165,233,0.4);",
+                        style: "width:48px; height:48px; border-radius:16px; background:linear-gradient(135deg,#6366f1,#22d3ee); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; color:#0f172a; box-shadow:0 12px 30px rgba(14,165,233,0.4);",
                         "F"
                     }
 
                     // 中间主导航图标
                     nav {
-                        style: "display:flex; flex-direction:column; align-items:center; gap:clamp(8px,1.6vw,14px); margin-top:8px; flex:1; width:100%; padding-inline:clamp(6px,1.3vw,12px);",
+                        style: "display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:12px; flex:1; width:100%; padding-inline:8px;",
 
                         SidebarIcon { icon: "🏠", label: "首页", to: Some(Route::Home {}) }
+                        SidebarIcon { icon: "✈️", label: "航司报价", to: Some(Route::Airline {}) }
+                        SidebarIcon { icon: "⚙️", label: "配置管理", to: Some(Route::Config {}) }
                         SidebarIcon { icon: "🛰️", label: "可用服务", to: None }
                         SidebarIcon { icon: "🧰", label: "注册机", to: None }
-                        SidebarIcon { icon: "✈️", label: "航司报价", to: Some(Route::Airline {}) }
-                        SidebarIcon { icon: "🌀", label: "临时业务", to: None }
-                        SidebarIcon { icon: "🔐", label: "验证码服务", to: None }
-                        SidebarIcon { icon: "☁️", label: "云服务", to: None }
-                        SidebarIcon { icon: "🔔", label: "通知", to: None }
+                        SidebarIcon { icon: "🔐", label: "验证码", to: None }
                     }
 
                     // 底部辅助图标（帮助、设置等）
                     div {
-                        style: "display:flex; flex-direction:column; align-items:center; gap:clamp(6px,1.4vw,12px); padding-top:12px; border-top:1px solid rgba(30,41,59,0.65); width:100%; padding-inline:clamp(6px,1.3vw,12px);",
+                        style: "display:flex; flex-direction:column; align-items:center; gap:10px; padding-top:12px; border-top:1px solid rgba(30,41,59,0.65); width:100%; padding-inline:8px;",
                         SidebarIcon { icon: "❓", label: "帮助", to: None }
-                        SidebarIcon { icon: "⚙️", label: "设置", to: None }
+                        SidebarIcon { icon: "🔔", label: "通知", to: None }
                     }
                 }
 
@@ -145,13 +143,13 @@ fn SidebarIcon(icon: &'static str, label: &'static str, to: Option<Route>) -> El
     let mut hovering = use_signal(|| false);
 
     // 统一的图标按钮样式
-    let base_style = "width:clamp(46px,6vw,64px); height:clamp(46px,6vw,64px); border-radius:18px; display:flex; align-items:center;\
-                      justify-content:center; font-size:clamp(20px,2.5vw,24px); cursor:pointer; border:1px solid rgba(148,163,184,0.2);\
+    let base_style = "width:56px; height:56px; border-radius:16px; display:flex; align-items:center;\
+                      justify-content:center; font-size:26px; cursor:pointer; border:1px solid rgba(148,163,184,0.2);\
                       outline:none; background:rgba(15,23,42,0.6); color:inherit; text-decoration:none; box-shadow:0 10px 20px rgba(2,6,23,0.4);\
                       transition:transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;";
 
     let hover_style = if hovering() {
-        "transform:translateY(-2px) scale(1.05); box-shadow:0 15px 30px rgba(79,70,229,0.4); border-color:rgba(99,102,241,0.5); background:rgba(79,70,229,0.25);"
+        "transform:translateY(-2px) scale(1.08); box-shadow:0 15px 30px rgba(79,70,229,0.5); border-color:rgba(99,102,241,0.6); background:rgba(79,70,229,0.3);"
     } else {
         ""
     };
