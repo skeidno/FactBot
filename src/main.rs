@@ -54,9 +54,16 @@ const HEAD_STYLE: &str = r#"
 fn main() {
     use dioxus_desktop::{Config, WindowBuilder, LogicalSize};
     use dioxus_desktop::launch::launch as desktop_launch;
+    use dioxus_desktop::tao::window::Icon;
+
+    // 加载图标
+    let icon_bytes = include_bytes!("../assets/favicon.ico");
+    let icon = Icon::from_rgba(load_icon_rgba(icon_bytes), 256, 256)
+        .expect("Failed to load icon");
 
     let window = WindowBuilder::new()
         .with_title("FactBot 面板")
+        .with_window_icon(Some(icon))
         .with_decorations(false) // 关闭系统边框和菜单栏
         .with_transparent(false) // 允许自定义背景覆盖整个窗口
         .with_inner_size(LogicalSize::new(1260.0, 900.0))
@@ -69,6 +76,20 @@ fn main() {
 
     // contexts 使用默认空向量即可
     desktop_launch(App, Vec::new(), vec![Box::new(cfg)]);
+}
+
+#[cfg(feature = "desktop")]
+fn load_icon_rgba(icon_bytes: &[u8]) -> Vec<u8> {
+    use image::ImageReader;
+    use std::io::Cursor;
+    
+    let img = ImageReader::new(Cursor::new(icon_bytes))
+        .with_guessed_format()
+        .expect("Failed to guess icon format")
+        .decode()
+        .expect("Failed to decode icon");
+    
+    img.to_rgba8().into_raw()
 }
 
 /// 非桌面平台：保持原有启动方式

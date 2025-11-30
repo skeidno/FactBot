@@ -14,17 +14,11 @@
     
     <!-- Antenna -->
     <line x1="0" y1="-35" x2="0" y2="-48" stroke="#00ffaa" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="0" cy="-52" r="5" fill="#00ffaa">
-      <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
-    </circle>
+    <circle cx="0" cy="-52" r="5" fill="#00ffaa"/>
     
     <!-- Eyes -->
-    <circle cx="-10" cy="-24" r="5" fill="#00ffaa">
-      <animate attributeName="fill" values="#00ffaa;#ffffff;#00ffaa" dur="3s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="10" cy="-24" r="5" fill="#00ffaa">
-      <animate attributeName="fill" values="#00ffaa;#ffffff;#00ffaa" dur="3s" repeatCount="indefinite"/>
-    </circle>
+    <circle cx="-10" cy="-24" r="5" fill="#00ffaa"/>
+    <circle cx="10" cy="-24" r="5" fill="#00ffaa"/>
     
     <!-- Mouth -->
     <rect x="-14" y="-10" width="28" height="7" rx="2" fill="rgba(15,23,42,0.9)" stroke="#22d3ee" stroke-width="2"/>
@@ -37,9 +31,7 @@
     
     <!-- Chest Panel -->
     <rect x="-12" y="14" width="24" height="20" rx="3" fill="rgba(15,23,42,0.9)" stroke="#22d3ee" stroke-width="2"/>
-    <circle cx="0" cy="24" r="7" fill="none" stroke="#00ffaa" stroke-width="2.5">
-      <animate attributeName="stroke-dasharray" values="0,44;44,0;0,44" dur="4s" repeatCount="indefinite"/>
-    </circle>
+    <circle cx="0" cy="24" r="7" fill="none" stroke="#00ffaa" stroke-width="2.5" stroke-dasharray="44,0"/>
     
     <!-- Arms -->
     <rect x="-28" y="12" width="7" height="24" rx="3.5" fill="url(#robotGrad)" stroke="#22d3ee" stroke-width="2"/>

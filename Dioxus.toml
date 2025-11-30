@@ -1,9 +1,17 @@
 [application]
+# Application name
+name = "fact-bot"
+
+# Application icon (for desktop builds)
+icon = "assets/favicon.ico"
 
 [web.app]
 
 # HTML title tag content
 title = "fact-bot"
+
+# Favicon for web builds
+icon = ["assets/favicon.svg"]
 
 # include `assets` in web platform
 [web.resource]
