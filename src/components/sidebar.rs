@@ -13,11 +13,11 @@ pub fn Sidebar() -> Element {
 
             // 主体区域：左侧侧边栏 + 右侧内容
             div {
-                style: "display:flex; flex:1 1 auto; background:rgba(2,6,23,0.85); border-top:1px solid rgba(15,23,42,0.9); overflow:hidden;",
+                style: "display:flex; flex:1 1 0; min-height:0; background:rgba(2,6,23,0.85); border-top:1px solid rgba(15,23,42,0.9); overflow:hidden;",
 
                 // 左侧窄侧边栏（仅图标）
                 div {
-                    style: "width:80px; background:linear-gradient(195deg,rgba(15,23,42,0.95),rgba(2,6,23,0.8)); color:#f8fafc; display:flex; flex-direction:column; align-items:center; padding:16px 0; border-right:1px solid rgba(148,163,184,0.12); gap:12px;",
+                    style: "width:80px; min-width:80px; max-width:80px; background:linear-gradient(195deg,rgba(15,23,42,0.95),rgba(2,6,23,0.8)); color:#f8fafc; display:flex; flex-direction:column; align-items:center; padding:16px 0; border-right:1px solid rgba(148,163,184,0.12); gap:12px; flex-shrink:0;",
 
                     // 顶部 Logo - 用户头像
                     UserAvatar { size: 48 }
@@ -41,7 +41,7 @@ pub fn Sidebar() -> Element {
 
                 // 右侧内容区域，通过 Outlet 渲染当前路由页面
                 div {
-                    style: "flex:1; min-width:0; padding:32px 40px; overflow:hidden; background:rgba(15,23,42,0.4); color:#e2e8f0; backdrop-filter:blur(30px); border-left:1px solid rgba(148,163,184,0.12);",
+                    style: "flex:1 1 0; min-width:0; width:0; padding:32px 40px; overflow:hidden; background:rgba(15,23,42,0.4); color:#e2e8f0; backdrop-filter:blur(30px); border-left:1px solid rgba(148,163,184,0.12); box-sizing:border-box;",
                     Outlet::<Route> {}
                 }
             }
