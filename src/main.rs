@@ -100,26 +100,14 @@ fn main() {
 
 #[component]
 fn App() -> Element {
+    // 初始化数据库（首次启动会自动标记）
+    let _ = db::is_first_launch();
+    
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: TAILWIND_CSS }
 
         Router::<Route> {}
-        
-        // 在 Router 之后检查首次启动
-        FirstLaunchHandler {}
     }
-}
-
-#[component]
-fn FirstLaunchHandler() -> Element {
-    use_effect(move || {
-        if db::is_first_launch() {
-            let nav = navigator();
-            nav.replace(Route::Home {});
-        }
-    });
-    
-    rsx! {}
 }

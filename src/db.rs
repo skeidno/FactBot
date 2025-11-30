@@ -1,24 +1,32 @@
-use directories::UserDirs;
+use directories::ProjectDirs;
 use rusqlite::{Connection, Result};
 use std::fs;
 use std::path::PathBuf;
 
+/// 获取跨平台的数据库路径
+/// - Windows: C:\Users\<用户>\AppData\Roaming\FactBot\config.db
+/// - macOS: ~/Library/Application Support/FactBot/config.db
+/// - Linux: ~/.local/share/FactBot/config.db
 pub fn get_db_path() -> PathBuf {
-    let user_dirs = UserDirs::new().expect("无法获取用户目录");
-    let documents = user_dirs.document_dir().expect("无法获取文档目录");
-    let factbot_dir = documents.join("FactBot");
+    let project_dirs = ProjectDirs::from("", "", "FactBot")
+        .expect("无法获取应用数据目录");
     
-    // 创建 FactBot 目录
-    if !factbot_dir.exists() {
-        fs::create_dir_all(&factbot_dir).expect("无法创建 FactBot 目录");
+    let data_dir = project_dirs.data_dir();
+    
+    // 创建数据目录
+    if !data_dir.exists() {
+        fs::create_dir_all(data_dir).expect("无法创建数据目录");
     }
     
-    factbot_dir.join("config.db")
+    data_dir.join("config.db")
 }
 
 pub fn init_db() -> Result<Connection> {
     let db_path = get_db_path();
-    let conn = Connection::open(db_path)?;
+    let is_new_db = !db_path.exists();
+    
+    // println!("数据库路径: {:?}", db_path);
+    let conn = Connection::open(&db_path)?;
     
     // 创建配置表
     conn.execute(
@@ -28,6 +36,13 @@ pub fn init_db() -> Result<Connection> {
         )",
         [],
     )?;
+    
+    // 如果是新创建的数据库，等待2秒确保完全初始化
+    if is_new_db {
+        // println!("首次创建数据库，等待初始化...");
+        std::thread::sleep(std::time::Duration::from_secs(2));
+        // println!("数据库初始化完成");
+    }
     
     Ok(conn)
 }
