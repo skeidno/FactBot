@@ -19,11 +19,8 @@ pub fn Sidebar() -> Element {
                 div {
                     style: "width:80px; background:linear-gradient(195deg,rgba(15,23,42,0.95),rgba(2,6,23,0.8)); color:#f8fafc; display:flex; flex-direction:column; align-items:center; padding:16px 0; border-right:1px solid rgba(148,163,184,0.12); gap:12px;",
 
-                    // 顶部 Logo
-                    div {
-                        style: "width:48px; height:48px; border-radius:16px; background:linear-gradient(135deg,#6366f1,#22d3ee); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; color:#0f172a; box-shadow:0 12px 30px rgba(14,165,233,0.4);",
-                        "F"
-                    }
+                    // 顶部 Logo - 用户头像
+                    UserAvatar { size: 48 }
 
                     // 中间主导航图标
                     nav {
@@ -55,6 +52,8 @@ pub fn Sidebar() -> Element {
 /// 自定义标题栏，带最小化 / 最大化 / 关闭按钮
 #[component]
 fn TitleBar() -> Element {
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    
     rsx! {
         div {
             style: "height:42px; display:flex; align-items:center; justify-content:space-between; padding:0 18px; background:linear-gradient(120deg,#020617,#020617,#0b1120); color:#e5e7eb; border-bottom:1px solid rgba(15,23,42,0.9); user-select:none; cursor:grab;",
@@ -66,15 +65,22 @@ fn TitleBar() -> Element {
                 }
             },
 
-            // 左侧标题
+            // 左侧 Logo 和版本号
             div {
-                style: "display:flex; align-items:center; gap:10px; font-size:13px; letter-spacing:0.4px;",
-                span {
-                    style: "width:10px; height:10px; border-radius:999px; background:linear-gradient(135deg,#4f46e5,#22c55e); box-shadow:0 0 12px rgba(59,130,246,0.9);",
-                }
-                span {
-                    style: "font-weight:600; text-transform:uppercase; color:#f8fafc;",
-                    "FactBot 控制台"
+                style: "display:flex; align-items:center; gap:12px;",
+                // Logo - 机器人图标
+                RobotIcon { size: 28 }
+                // 标题和版本
+                div {
+                    style: "display:flex; flex-direction:column; gap:2px;",
+                    span {
+                        style: "font-weight:700; font-size:14px; color:#f8fafc; letter-spacing:0.3px;",
+                        "FactBot"
+                    }
+                    span {
+                        style: "font-size:11px; color:#94a3b8; font-weight:500;",
+                        "v{VERSION}"
+                    }
                 }
             }
 
@@ -217,5 +223,230 @@ fn SidebarIcon(icon: &'static str, label: &'static str, to: Option<Route>) -> El
                 }
             }
         },
+    }
+}
+
+
+/// 用户头像组件 - 默认头像
+#[component]
+fn UserAvatar(size: u32) -> Element {
+    let container_size = format!("width:{}px; height:{}px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; box-shadow:0 {}px {}px rgba(99,102,241,0.4); border:2px solid rgba(139,92,246,0.5);", 
+        size, size, size / 6, size / 3);
+    
+    rsx! {
+        div {
+            style: "{container_size}",
+            svg {
+                xmlns: "http://www.w3.org/2000/svg",
+                view_box: "0 0 24 24",
+                width: "60%",
+                height: "60%",
+                fill: "none",
+                stroke: "#ffffff",
+                stroke_width: "2",
+                stroke_linecap: "round",
+                stroke_linejoin: "round",
+                
+                // User icon
+                path { d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" }
+                circle { cx: "12", cy: "7", r: "4" }
+            }
+        }
+    }
+}
+
+/// 机器人图标组件 - 内联 SVG
+#[component]
+fn RobotIcon(size: u32) -> Element {
+    let container_size = format!("width:{}px; height:{}px; border-radius:{}px; background:linear-gradient(135deg,#6366f1,#22d3ee); display:flex; align-items:center; justify-content:center; box-shadow:0 {}px {}px rgba(14,165,233,0.4); padding:{}px;", 
+        size, size, size / 3, size / 4, size / 2, size / 8);
+    
+    rsx! {
+        div {
+            style: "{container_size}",
+            svg {
+                xmlns: "http://www.w3.org/2000/svg",
+                view_box: "0 0 128 128",
+                width: "100%",
+                height: "100%",
+                
+                defs {
+                    linearGradient {
+                        id: "robotGrad",
+                        x1: "0%",
+                        y1: "0%",
+                        x2: "100%",
+                        y2: "100%",
+                        stop { offset: "0%", stop_color: "#6366f1", stop_opacity: "1" }
+                        stop { offset: "50%", stop_color: "#22d3ee", stop_opacity: "1" }
+                        stop { offset: "100%", stop_color: "#0ea5e9", stop_opacity: "1" }
+                    }
+                }
+                
+                g {
+                    transform: "translate(64, 64)",
+                    
+                    // Robot Head
+                    rect {
+                        x: "-24",
+                        y: "-35",
+                        width: "48",
+                        height: "40",
+                        rx: "8",
+                        fill: "url(#robotGrad)",
+                        stroke: "#22d3ee",
+                        stroke_width: "3"
+                    }
+                    
+                    // Antenna
+                    line {
+                        x1: "0",
+                        y1: "-35",
+                        x2: "0",
+                        y2: "-48",
+                        stroke: "#00ffaa",
+                        stroke_width: "4",
+                        stroke_linecap: "round"
+                    }
+                    circle {
+                        cx: "0",
+                        cy: "-52",
+                        r: "5",
+                        fill: "#00ffaa",
+                        animate {
+                            attribute_name: "opacity",
+                            values: "1;0.3;1",
+                            dur: "2s",
+                            repeat_count: "indefinite"
+                        }
+                    }
+                    
+                    // Eyes
+                    circle {
+                        cx: "-10",
+                        cy: "-24",
+                        r: "5",
+                        fill: "#00ffaa",
+                        animate {
+                            attribute_name: "fill",
+                            values: "#00ffaa;#ffffff;#00ffaa",
+                            dur: "3s",
+                            repeat_count: "indefinite"
+                        }
+                    }
+                    circle {
+                        cx: "10",
+                        cy: "-24",
+                        r: "5",
+                        fill: "#00ffaa",
+                        animate {
+                            attribute_name: "fill",
+                            values: "#00ffaa;#ffffff;#00ffaa",
+                            dur: "3s",
+                            repeat_count: "indefinite"
+                        }
+                    }
+                    
+                    // Mouth
+                    rect {
+                        x: "-14",
+                        y: "-10",
+                        width: "28",
+                        height: "7",
+                        rx: "2",
+                        fill: "rgba(15,23,42,0.9)",
+                        stroke: "#22d3ee",
+                        stroke_width: "2"
+                    }
+                    line {
+                        x1: "-10",
+                        y1: "-6.5",
+                        x2: "-4",
+                        y2: "-6.5",
+                        stroke: "#00ffaa",
+                        stroke_width: "2",
+                        stroke_linecap: "round"
+                    }
+                    line {
+                        x1: "-1",
+                        y1: "-6.5",
+                        x2: "5",
+                        y2: "-6.5",
+                        stroke: "#00ffaa",
+                        stroke_width: "2",
+                        stroke_linecap: "round"
+                    }
+                    line {
+                        x1: "8",
+                        y1: "-6.5",
+                        x2: "11",
+                        y2: "-6.5",
+                        stroke: "#00ffaa",
+                        stroke_width: "2",
+                        stroke_linecap: "round"
+                    }
+                    
+                    // Body
+                    rect {
+                        x: "-20",
+                        y: "8",
+                        width: "40",
+                        height: "32",
+                        rx: "6",
+                        fill: "url(#robotGrad)",
+                        stroke: "#22d3ee",
+                        stroke_width: "3"
+                    }
+                    
+                    // Chest Panel
+                    rect {
+                        x: "-12",
+                        y: "14",
+                        width: "24",
+                        height: "20",
+                        rx: "3",
+                        fill: "rgba(15,23,42,0.9)",
+                        stroke: "#22d3ee",
+                        stroke_width: "2"
+                    }
+                    circle {
+                        cx: "0",
+                        cy: "24",
+                        r: "7",
+                        fill: "none",
+                        stroke: "#00ffaa",
+                        stroke_width: "2.5",
+                        animate {
+                            attribute_name: "stroke-dasharray",
+                            values: "0,44;44,0;0,44",
+                            dur: "4s",
+                            repeat_count: "indefinite"
+                        }
+                    }
+                    
+                    // Arms
+                    rect {
+                        x: "-28",
+                        y: "12",
+                        width: "7",
+                        height: "24",
+                        rx: "3.5",
+                        fill: "url(#robotGrad)",
+                        stroke: "#22d3ee",
+                        stroke_width: "2"
+                    }
+                    rect {
+                        x: "21",
+                        y: "12",
+                        width: "7",
+                        height: "24",
+                        rx: "3.5",
+                        fill: "url(#robotGrad)",
+                        stroke: "#22d3ee",
+                        stroke_width: "2"
+                    }
+                }
+            }
+        }
     }
 }
