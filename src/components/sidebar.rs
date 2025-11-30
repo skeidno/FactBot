@@ -137,63 +137,88 @@ fn TitleBar() -> Element {
 const TITLE_BTN_STYLE: &str = "width:28px; height:24px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); background:rgba(15,23,42,0.65); color:#e5e7eb; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; padding:0 0 1px 0; box-shadow:0 4px 12px rgba(2,6,23,0.55); transition:background 120ms ease;";
 const TITLE_BTN_CLOSE_STYLE: &str = "width:28px; height:24px; border-radius:999px; border:1px solid rgba(248,113,113,0.9); background:linear-gradient(135deg,#fb7185,#b91c1c); color:#fef2f2; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; padding:0 0 1px 0; box-shadow:0 4px 16px rgba(127,29,29,0.65);";
 
-/// 单个图标按钮。
+/// 单个图标按钮，带悬浮气泡提示
 /// - 如果 `to` 为 Some，则使用 Link 进行路由跳转
 /// - 如果 `to` 为 None，则渲染为普通按钮（目前作为占位，将来可以绑定事件）
 #[component]
 fn SidebarIcon(icon: &'static str, label: &'static str, to: Option<Route>) -> Element {
-    // 统一的图标按钮样式
-    let base_style = "width:clamp(46px,6vw,64px); height:clamp(46px,6vw,64px); border-radius:18px; display:flex; flex-direction:column; align-items:center;\
-                      justify-content:center; gap:4px; font-size:clamp(16px,2vw,20px); cursor:pointer; border:1px solid rgba(148,163,184,0.2);\
-                      outline:none; background:rgba(15,23,42,0.6); color:inherit; text-decoration:none; box-shadow:0 10px 20px rgba(2,6,23,0.4);\
-                      transition:transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;";
-
     let mut hovering = use_signal(|| false);
 
-    let label_style_visible = "font-size:clamp(8px,1.2vw,11px); text-transform:uppercase; letter-spacing:0.3px; color:rgba(226,232,240,0.8);\
-                               opacity:1; max-height:24px; transform:translateY(0); transition:opacity 140ms ease, max-height 140ms ease, transform 140ms ease;";
-    let label_style_hidden = "font-size:clamp(8px,1.2vw,11px); text-transform:uppercase; letter-spacing:0.3px; color:rgba(226,232,240,0.8);\
-                               opacity:0; max-height:0; transform:translateY(-6px); overflow:hidden; transition:opacity 140ms ease, max-height 140ms ease, transform 140ms ease;";
-    let label_style = if hovering() {
-        label_style_visible
+    // 统一的图标按钮样式
+    let base_style = "width:clamp(46px,6vw,64px); height:clamp(46px,6vw,64px); border-radius:18px; display:flex; align-items:center;\
+                      justify-content:center; font-size:clamp(20px,2.5vw,24px); cursor:pointer; border:1px solid rgba(148,163,184,0.2);\
+                      outline:none; background:rgba(15,23,42,0.6); color:inherit; text-decoration:none; box-shadow:0 10px 20px rgba(2,6,23,0.4);\
+                      transition:transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;";
+
+    let hover_style = if hovering() {
+        "transform:translateY(-2px) scale(1.05); box-shadow:0 15px 30px rgba(79,70,229,0.4); border-color:rgba(99,102,241,0.5); background:rgba(79,70,229,0.25);"
     } else {
-        label_style_hidden
+        ""
+    };
+
+    // 气泡提示样式
+    let tooltip_style = if hovering() {
+        "position:absolute; left:calc(100% + 12px); top:50%; transform:translateY(-50%); \
+         background:linear-gradient(135deg,#1e293b,#0f172a); color:#f1f5f9; padding:8px 14px; \
+         border-radius:10px; font-size:13px; font-weight:500; white-space:nowrap; \
+         box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid rgba(148,163,184,0.2); \
+         opacity:1; pointer-events:none; z-index:1000; \
+         transition:opacity 200ms ease;"
+    } else {
+        "position:absolute; left:calc(100% + 12px); top:50%; transform:translateY(-50%); \
+         background:linear-gradient(135deg,#1e293b,#0f172a); color:#f1f5f9; padding:8px 14px; \
+         border-radius:10px; font-size:13px; font-weight:500; white-space:nowrap; \
+         box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid rgba(148,163,184,0.2); \
+         opacity:0; pointer-events:none; z-index:1000; \
+         transition:opacity 200ms ease;"
     };
 
     match to {
         Some(route) => rsx! {
-            Link {
-                to: route,
-                style: "text-decoration:none; display:flex; justify-content:center;",
-                title: "{label}",
-                div {
-                    style: "{base_style}",
-                    onpointerenter: move |_| hovering.set(true),
-                    onpointerleave: move |_| hovering.set(false),
-                    span {
-                        style: "font-size:22px;",
+            div {
+                style: "position:relative; display:flex; justify-content:center;",
+                Link {
+                    to: route,
+                    style: "text-decoration:none; display:flex; justify-content:center;",
+                    div {
+                        style: "{base_style} {hover_style}",
+                        onpointerenter: move |_| hovering.set(true),
+                        onpointerleave: move |_| hovering.set(false),
                         "{icon}"
                     }
-                    span {
-                        style: "{label_style}",
-                        "{label}"
+                }
+                // 气泡提示
+                div {
+                    style: "{tooltip_style}",
+                    "{label}"
+                    // 小三角箭头
+                    div {
+                        style: "position:absolute; right:100%; top:50%; transform:translateY(-50%); \
+                                width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; \
+                                border-right:6px solid #1e293b;",
                     }
                 }
             }
         },
         None => rsx! {
-            button {
-                style: "{base_style} opacity:0.85;",
-                title: "{label}",
-                onpointerenter: move |_| hovering.set(true),
-                onpointerleave: move |_| hovering.set(false),
-                span {
-                    style: "font-size:22px;",
+            div {
+                style: "position:relative; display:flex; justify-content:center;",
+                button {
+                    style: "{base_style} {hover_style} opacity:0.85;",
+                    onpointerenter: move |_| hovering.set(true),
+                    onpointerleave: move |_| hovering.set(false),
                     "{icon}"
                 }
-                span {
-                    style: "{label_style}",
+                // 气泡提示
+                div {
+                    style: "{tooltip_style}",
                     "{label}"
+                    // 小三角箭头
+                    div {
+                        style: "position:absolute; right:100%; top:50%; transform:translateY(-50%); \
+                                width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; \
+                                border-right:6px solid #1e293b;",
+                    }
                 }
             }
         },
