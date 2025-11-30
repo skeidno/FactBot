@@ -293,6 +293,13 @@ fn ProxyGroupSection(proxy_groups: Signal<Vec<ProxyGroup>>) -> Element {
 fn ProxyGroupEditor(group: ProxyGroup, group_index: usize, proxy_groups: Signal<Vec<ProxyGroup>>) -> Element {
     let mut show_batch_modal = use_signal(|| false);
     let batch_input = use_signal(|| "".to_string());
+    let mut page_size = use_signal(|| 20usize);
+    let mut current_page = use_signal(|| 1usize);
+    
+    let total_items = group.proxies.len();
+    let total_pages = (total_items + page_size() - 1) / page_size();
+    let start_index = (current_page() - 1) * page_size();
+    let end_index = (start_index + page_size()).min(total_items);
 
     rsx! {
         div {
@@ -331,6 +338,34 @@ fn ProxyGroupEditor(group: ProxyGroup, group_index: usize, proxy_groups: Signal<
 
             if !group.proxies.is_empty() {
                 div {
+                    style: "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;",
+                    div {
+                        style: "font-size:13px; color:#6b7280;",
+                        "共 {total_items} 条记录，第 {start_index + 1}-{end_index} 条"
+                    }
+                    div {
+                        style: "display:flex; align-items:center; gap:12px;",
+                        span {
+                            style: "font-size:13px; color:#6b7280;",
+                            "每页显示："
+                        }
+                        select {
+                            value: page_size().to_string(),
+                            onchange: move |evt| {
+                                if let Ok(size) = evt.value().parse::<usize>() {
+                                    page_size.set(size);
+                                    current_page.set(1);
+                                }
+                            },
+                            style: "padding:6px 10px; border-radius:6px; border:1px solid #d1d5db; font-size:13px; background:white; cursor:pointer;",
+                            option { value: "20", "20 条" }
+                            option { value: "50", "50 条" }
+                            option { value: "100", "100 条" }
+                        }
+                    }
+                }
+                
+                div {
                     style: "background:white; border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;",
                     table {
                         style: "width:100%; border-collapse:collapse;",
@@ -346,7 +381,7 @@ fn ProxyGroupEditor(group: ProxyGroup, group_index: usize, proxy_groups: Signal<
                             }
                         }
                         tbody {
-                            for (proxy_index, proxy) in group.proxies.iter().enumerate() {
+                            for (proxy_index, proxy) in group.proxies.iter().enumerate().skip(start_index).take(page_size()) {
                                 ProxyTableRow {
                                     proxy: proxy.clone(),
                                     proxy_index,
@@ -356,6 +391,10 @@ fn ProxyGroupEditor(group: ProxyGroup, group_index: usize, proxy_groups: Signal<
                             }
                         }
                     }
+                }
+                
+                if total_pages > 1 {
+                    Pagination { current_page, total_pages }
                 }
             } else {
                 div {
@@ -619,6 +658,14 @@ fn OtpGroupSection(otp_groups: Signal<Vec<OtpGroup>>) -> Element {
 
 #[component]
 fn OtpGroupEditor(group: OtpGroup, group_index: usize, otp_groups: Signal<Vec<OtpGroup>>) -> Element {
+    let mut page_size = use_signal(|| 20usize);
+    let mut current_page = use_signal(|| 1usize);
+    
+    let total_items = group.configs.len();
+    let total_pages = (total_items + page_size() - 1) / page_size();
+    let start_index = (current_page() - 1) * page_size();
+    let end_index = (start_index + page_size()).min(total_items);
+
     rsx! {
         div {
             style: "background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius:16px; padding:24px; border:1px solid #fbbf24;",
@@ -667,6 +714,34 @@ fn OtpGroupEditor(group: OtpGroup, group_index: usize, otp_groups: Signal<Vec<Ot
 
             if !group.configs.is_empty() {
                 div {
+                    style: "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;",
+                    div {
+                        style: "font-size:13px; color:#92400e;",
+                        "共 {total_items} 条记录，第 {start_index + 1}-{end_index} 条"
+                    }
+                    div {
+                        style: "display:flex; align-items:center; gap:12px;",
+                        span {
+                            style: "font-size:13px; color:#92400e;",
+                            "每页显示："
+                        }
+                        select {
+                            value: page_size().to_string(),
+                            onchange: move |evt| {
+                                if let Ok(size) = evt.value().parse::<usize>() {
+                                    page_size.set(size);
+                                    current_page.set(1);
+                                }
+                            },
+                            style: "padding:6px 10px; border-radius:6px; border:1px solid #fbbf24; font-size:13px; background:white; cursor:pointer;",
+                            option { value: "20", "20 条" }
+                            option { value: "50", "50 条" }
+                            option { value: "100", "100 条" }
+                        }
+                    }
+                }
+                
+                div {
                     style: "background:white; border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;",
                     table {
                         style: "width:100%; border-collapse:collapse;",
@@ -682,7 +757,7 @@ fn OtpGroupEditor(group: OtpGroup, group_index: usize, otp_groups: Signal<Vec<Ot
                             }
                         }
                         tbody {
-                            for (config_index, config) in group.configs.iter().enumerate() {
+                            for (config_index, config) in group.configs.iter().enumerate().skip(start_index).take(page_size()) {
                                 OtpTableRow {
                                     config: config.clone(),
                                     config_index,
@@ -692,6 +767,10 @@ fn OtpGroupEditor(group: OtpGroup, group_index: usize, otp_groups: Signal<Vec<Ot
                             }
                         }
                     }
+                }
+                
+                if total_pages > 1 {
+                    Pagination { current_page, total_pages }
                 }
             } else {
                 div {
@@ -866,6 +945,14 @@ fn CardGroupSection(card_groups: Signal<Vec<CardGroup>>) -> Element {
 
 #[component]
 fn CardGroupEditor(group: CardGroup, group_index: usize, card_groups: Signal<Vec<CardGroup>>) -> Element {
+    let mut page_size = use_signal(|| 20usize);
+    let mut current_page = use_signal(|| 1usize);
+    
+    let total_items = group.cards.len();
+    let total_pages = (total_items + page_size() - 1) / page_size();
+    let start_index = (current_page() - 1) * page_size();
+    let end_index = (start_index + page_size()).min(total_items);
+
     rsx! {
         div {
             style: "background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius:16px; padding:24px; border:1px solid #fbbf24;",
@@ -913,9 +1000,39 @@ fn CardGroupEditor(group: CardGroup, group_index: usize, card_groups: Signal<Vec
                 }
             }
 
+            if !group.cards.is_empty() {
+                div {
+                    style: "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;",
+                    div {
+                        style: "font-size:13px; color:#92400e;",
+                        "共 {total_items} 条记录，第 {start_index + 1}-{end_index} 条"
+                    }
+                    div {
+                        style: "display:flex; align-items:center; gap:12px;",
+                        span {
+                            style: "font-size:13px; color:#92400e;",
+                            "每页显示："
+                        }
+                        select {
+                            value: page_size().to_string(),
+                            onchange: move |evt| {
+                                if let Ok(size) = evt.value().parse::<usize>() {
+                                    page_size.set(size);
+                                    current_page.set(1);
+                                }
+                            },
+                            style: "padding:6px 10px; border-radius:6px; border:1px solid #fbbf24; font-size:13px; background:white; cursor:pointer;",
+                            option { value: "20", "20 条" }
+                            option { value: "50", "50 条" }
+                            option { value: "100", "100 条" }
+                        }
+                    }
+                }
+            }
+            
             div {
                 style: "display:flex; flex-direction:column; gap:16px;",
-                for (card_index, card) in group.cards.iter().enumerate() {
+                for (card_index, card) in group.cards.iter().enumerate().skip(start_index).take(page_size()) {
                     CardConfigItem {
                         card: card.clone(),
                         card_index,
@@ -929,6 +1046,10 @@ fn CardGroupEditor(group: CardGroup, group_index: usize, card_groups: Signal<Vec
                         "暂无卡片配置，点击"添加卡片"开始配置"
                     }
                 }
+            }
+            
+            if total_pages > 1 {
+                Pagination { current_page, total_pages }
             }
 
             div {
@@ -1110,6 +1231,14 @@ fn PassengerGroupSection(passenger_groups: Signal<Vec<PassengerGroup>>) -> Eleme
 
 #[component]
 fn PassengerGroupEditor(group: PassengerGroup, group_index: usize, passenger_groups: Signal<Vec<PassengerGroup>>) -> Element {
+    let mut page_size = use_signal(|| 20usize);
+    let mut current_page = use_signal(|| 1usize);
+    
+    let total_items = group.passengers.len();
+    let total_pages = (total_items + page_size() - 1) / page_size();
+    let start_index = (current_page() - 1) * page_size();
+    let end_index = (start_index + page_size()).min(total_items);
+
     rsx! {
         div {
             style: "background:linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius:16px; padding:24px; border:1px solid #60a5fa;",
@@ -1157,9 +1286,39 @@ fn PassengerGroupEditor(group: PassengerGroup, group_index: usize, passenger_gro
                 }
             }
 
+            if !group.passengers.is_empty() {
+                div {
+                    style: "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:0 4px;",
+                    div {
+                        style: "font-size:13px; color:#1e40af;",
+                        "共 {total_items} 条记录，第 {start_index + 1}-{end_index} 条"
+                    }
+                    div {
+                        style: "display:flex; align-items:center; gap:12px;",
+                        span {
+                            style: "font-size:13px; color:#1e40af;",
+                            "每页显示："
+                        }
+                        select {
+                            value: page_size().to_string(),
+                            onchange: move |evt| {
+                                if let Ok(size) = evt.value().parse::<usize>() {
+                                    page_size.set(size);
+                                    current_page.set(1);
+                                }
+                            },
+                            style: "padding:6px 10px; border-radius:6px; border:1px solid #60a5fa; font-size:13px; background:white; cursor:pointer;",
+                            option { value: "20", "20 条" }
+                            option { value: "50", "50 条" }
+                            option { value: "100", "100 条" }
+                        }
+                    }
+                }
+            }
+            
             div {
                 style: "display:flex; flex-direction:column; gap:16px;",
-                for (passenger_index, passenger) in group.passengers.iter().enumerate() {
+                for (passenger_index, passenger) in group.passengers.iter().enumerate().skip(start_index).take(page_size()) {
                     PassengerConfigItem {
                         passenger: passenger.clone(),
                         passenger_index,
@@ -1173,6 +1332,10 @@ fn PassengerGroupEditor(group: PassengerGroup, group_index: usize, passenger_gro
                         "暂无购票人信息，点击"添加购票人"开始配置"
                     }
                 }
+            }
+
+            if total_pages > 1 {
+                Pagination { current_page, total_pages }
             }
 
             div {
@@ -1302,6 +1465,53 @@ fn ConfigInput(props: ConfigInputProps) -> Element {
                 placeholder: props.placeholder,
                 oninput: move |evt| props.onchange.call(evt.value()),
                 style: "padding:11px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; transition:border-color 0.2s ease, box-shadow 0.2s ease; background:white;",
+            }
+        }
+    }
+}
+
+#[component]
+fn Pagination(current_page: Signal<usize>, total_pages: usize) -> Element {
+    rsx! {
+        div {
+            style: "display:flex; justify-content:center; align-items:center; gap:8px; margin-top:16px;",
+            button {
+                style: "padding:8px 14px; border-radius:8px; border:1px solid #d1d5db; background:white; color:#6b7280; font-weight:500; cursor:pointer; font-size:13px;",
+                disabled: current_page() == 1,
+                onclick: move |_| {
+                    if current_page() > 1 {
+                        current_page.set(current_page() - 1);
+                    }
+                },
+                "上一页"
+            }
+            for page in 1..=total_pages {
+                {
+                    let is_current = page == current_page();
+                    let btn_style = if is_current {
+                        "padding:8px 12px; border-radius:8px; background:#4f46e5; color:white; font-weight:600; cursor:pointer; border:none; font-size:13px;"
+                    } else {
+                        "padding:8px 12px; border-radius:8px; background:white; color:#6b7280; font-weight:500; cursor:pointer; border:1px solid #d1d5db; font-size:13px;"
+                    };
+                    rsx! {
+                        button {
+                            key: "{page}",
+                            style: "{btn_style}",
+                            onclick: move |_| current_page.set(page),
+                            "{page}"
+                        }
+                    }
+                }
+            }
+            button {
+                style: "padding:8px 14px; border-radius:8px; border:1px solid #d1d5db; background:white; color:#6b7280; font-weight:500; cursor:pointer; font-size:13px;",
+                disabled: current_page() == total_pages,
+                onclick: move |_| {
+                    if current_page() < total_pages {
+                        current_page.set(current_page() + 1);
+                    }
+                },
+                "下一页"
             }
         }
     }
