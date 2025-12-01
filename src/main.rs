@@ -58,6 +58,13 @@ fn main() {
     use dioxus_desktop::{Config, WindowBuilder, LogicalSize};
     use dioxus_desktop::launch::launch as desktop_launch;
     use dioxus_desktop::tao::window::Icon;
+    use std::fs;
+
+    // 清除 WebView 缓存，确保每次启动都是干净状态
+    let webview_cache = std::env::temp_dir().join("factbot_webview");
+    if webview_cache.exists() {
+        let _ = fs::remove_dir_all(&webview_cache);
+    }
 
     // 加载图标
     let icon_bytes = include_bytes!("../assets/favicon.ico");
@@ -75,7 +82,8 @@ fn main() {
     let cfg = Config::new()
         .with_window(window)
         .with_custom_head(HEAD_STYLE.to_string())
-        .with_background_color((2, 6, 23, 255)); // 统一 WebView 背景色，与 UI 深色主题一致
+        .with_background_color((2, 6, 23, 255)) // 统一 WebView 背景色，与 UI 深色主题一致
+        .with_data_directory(std::env::temp_dir().join("factbot_webview")); // 使用临时目录，避免历史记录持久化
 
     // contexts 使用默认空向量即可
     desktop_launch(App, Vec::new(), vec![Box::new(cfg)]);
