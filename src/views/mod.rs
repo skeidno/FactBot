@@ -18,3 +18,6 @@ pub use help::Help;
 
 mod logs;
 pub use logs::Logs;
+
+mod captcha;
+pub use captcha::Captcha;
