@@ -1,196 +1,219 @@
-# FactBot 控制台
+# FactBot - 数据运维助手
 
-FactBot 是一个基于 Dioxus 0.7 构建的数据运维助手，提供航司报价查询、配置管理等功能的统一工作台。
+<div align="center">
+
+![FactBot Logo](assets/favicon.svg)
+
+**强大的数据运维助手，提供航司报价查询、配置管理和日志查看等功能**
+
+[![Rust](https://img.shields.io/badge/Rust-1.70+-orange.svg)](https://www.rust-lang.org/)
+[![Dioxus](https://img.shields.io/badge/Dioxus-0.7-blue.svg)](https://dioxuslabs.com/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+[功能特性](#功能特性) • [快速开始](#快速开始) • [文档](#文档) • [开发](#开发)
+
+</div>
 
 ## 功能特性
 
-### 🏠 首页
-- 产品介绍和快速导航
-- 引导用户进入各功能模块
+### 🎯 核心功能
 
-### ✈️ 航司报价查询
-- **支持 16 家航司**：美国航空、白俄罗斯航空、飞狮航空、越捷航空、维珍航空、韩亚航空、巴拿马航空、乌拉尔航空、西伯利亚航空、伊拉克航空、俄罗斯国际航空、北风航空、皇雀航空、马来西亚国际航空、宿务航空
-- **统一配置界面**：代理IP、端口、用户名、密码、Token 一站式配置
-- **实时预览**：配置修改后实时更新完整请求数据
-- **一键查询**：自动组合请求参数，支持 API 调用
-- **动态参数**：根据选择的航司自动切换查询参数模板
+- **航司报价查询** - 支持 16 家主流航司实时报价
+- **配置管理** - 统一管理代理、OTP 邮箱、支付卡片和购票人信息
+- **日志查看** - 强大的日志查询和管理系统
+- **浏览器指纹** - 支持 75+ 种浏览器指纹模拟
 
-### ⚙️ 配置管理中心
-支持四大配置模块，采用分组管理方式：
+### 📋 日志系统
 
-#### 1. 代理配置（支持分组批量管理）
-- **批量导入**：支持多行格式导入
-  - 格式：`ip:port:username:password` 或 `ip:port`
-  - 每行一个代理，自动解析
-- **表格展示**：清晰的表格形式展示所有代理
-- **分组管理**：创建多个分组（如"美国代理"、"欧洲代理"）
-- **实时编辑**：表格内直接编辑，无需额外弹窗
-- **批量保存**：一次性保存整个分组的所有配置
+- ✅ 多条件筛选（任务名称、UUID、级别、关键词）
+- ✅ 时间排序（最新/最旧在前）
+- ✅ 分页显示（20/50/100/200 条）
+- ✅ 日志截断 + 气泡提示
+- ✅ 一键复制完整日志
+- ✅ 环境区分（dev / 正式版）
 
-#### 2. OTP 邮箱服务（全局唯一配置）
-- 邮箱地址配置
-- API Key 管理
-- 服务提供商设置
-- 测试连接功能
+### ⚙️ 配置管理
 
-#### 3. 支付卡片配置（支持分组批量管理）
-- 支持信用卡和礼品卡
-- 分组管理多张卡片
-- 卡号、CVV、有效期、持卡人信息
-- 批量保存功能
+- ✅ 分组管理
+- ✅ 批量导入
+- ✅ 数据持久化
+- ✅ 密码保护
 
-#### 4. 购票人信息（支持分组批量管理）
-- 分组管理多个购票人
-- 姓名、邮箱、电话、护照信息
-- 批量保存功能
+### 🌐 HTTP 任务
 
-## 技术栈
+- ✅ TLS 指纹模拟
+- ✅ 浏览器特征模拟
+- ✅ 代理支持（固定/池）
+- ✅ Cookie 管理
+- ✅ 请求拦截
 
-- **框架**：Dioxus 0.7
-- **语言**：Rust
-- **UI**：自定义 CSS + 渐变设计
-- **路由**：Dioxus Router
-- **状态管理**：Signal
+## 快速开始
+
+### 用户
+
+1. **下载应用**
+   ```bash
+   # 从 Releases 页面下载对应平台的安装包
+   ```
+
+2. **启动应用**
+   - 双击运行程序
+   - 首次启动自动初始化数据库
+
+3. **查看文档**
+   - [用户使用手册](USER_GUIDE.md)
+
+### 开发者
+
+1. **环境准备**
+   ```bash
+   # 安装 Rust
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   
+   # 安装 Dioxus CLI
+   curl -sSL http://dioxus.dev/install.sh | sh
+   ```
+
+2. **克隆项目**
+   ```bash
+   git clone <repository>
+   cd FactBot
+   ```
+
+3. **运行开发环境**
+   ```bash
+   # 使用 dx（推荐）
+   dx serve
+   
+   # 或使用 cargo
+   cargo run
+   ```
+
+4. **查看文档**
+   - [开发者文档](DEVELOPER.md)
+
+## 文档
+
+- 📖 [用户使用手册](USER_GUIDE.md) - 完整的用户指南
+- 🔧 [开发者文档](DEVELOPER.md) - 技术文档和 API 说明
+- 💾 [数据库文档](docs/DATABASE.md) - 数据库结构和 API
+- 🎭 [浏览器指纹](docs/Emulation浏览器指纹配置.md) - Emulation 配置说明
 
 ## 项目结构
 
 ```
 FactBot/
-├─ assets/                    # 静态资源
-│  ├─ favicon.ico
-│  ├─ header.svg
-│  └─ styling/               # 样式文件
-│     ├─ main.css
-│     ├─ navbar.css
-│     └─ ...
-├─ src/
-│  ├─ main.rs                # 应用入口，路由定义
-│  ├─ components/            # 可复用组件
-│  │  ├─ mod.rs
-│  │  └─ sidebar.rs          # 侧边栏导航组件
-│  └─ views/                 # 页面视图
-│     ├─ mod.rs
-│     ├─ home.rs             # 首页
-│     ├─ airline.rs          # 航司报价页面
-│     ├─ config.rs           # 配置管理页面
-│     └─ blog.rs             # 博客页面
-├─ Cargo.toml                # Rust 依赖配置
-├─ Dioxus.toml              # Dioxus 配置
-└─ README.md
+├── src/
+│   ├── main.rs              # 应用入口
+│   ├── db.rs                # 数据库操作
+│   ├── common/              # 公共模块
+│   │   └── http_task/       # HTTP 任务系统
+│   ├── components/          # UI 组件
+│   └── views/               # 页面视图
+├── examples/                # 示例代码
+├── docs/                    # 文档
+├── assets/                  # 静态资源
+├── DEVELOPER.md             # 开发者文档
+├── USER_GUIDE.md            # 用户手册
+└── README.md                # 本文件
 ```
 
-## 快速开始
+## 开发
 
-### 环境要求
-
-- Rust 1.70+
-- Dioxus CLI
-
-### 安装 Dioxus CLI
+### 运行示例
 
 ```bash
-curl -sSL http://dioxus.dev/install.sh | sh
+# 数据库演示
+cargo run --example log_database_demo
+
+# 生成测试日志
+cargo run --example generate_test_logs
+
+# 浏览器指纹演示
+cargo run --example emulation_demo
 ```
 
-### 运行项目
-
-#### 桌面应用（推荐）
+### 构建发布
 
 ```bash
-dx serve --platform desktop
+# dev 模式（显示 DEBUG 日志）
+cargo build --release
+
+# 正式版（隐藏 DEBUG 日志）
+cargo build --release --no-default-features --features desktop
 ```
 
-#### Web 应用
+
+
+## 技术栈
+
+- **前端框架**: [Dioxus 0.7](https://dioxuslabs.com/)
+- **桌面应用**: dioxus-desktop
+- **数据库**: SQLite (rusqlite)
+- **异步运行时**: Tokio
+- **序列化**: Serde
+- **日志**: 自定义 Logger
+
+## 环境区分
+
+### dev 模式（开发）
 
 ```bash
-dx serve --platform web
+cargo run
 ```
 
-### 构建发布版本
+- ✅ 显示所有日志（包括 DEBUG）
+- ✅ 完整的调试信息
+
+### 正式版（生产）
 
 ```bash
-dx build --release --platform desktop
+cargo run --no-default-features --features desktop
 ```
 
-## 使用指南
+- ❌ 隐藏 DEBUG 日志（但仍入库）
+- ✅ 界面简洁，性能更好
 
-### 航司报价查询
+## 数据存储
 
-1. 在侧边栏点击 ✈️ 图标进入航司报价页面
-2. 配置代理信息（IP、端口、用户名、密码）
-3. 输入认证 Token
-4. 选择目标航司
-5. 查看实时更新的完整请求数据
-6. 点击"立即查询"发送请求
+### 配置数据库
 
-### 配置管理
+- **位置**: 用户数据目录
+- **文件**: `config.db`
+- **内容**: 应用配置、用户设置
+- **安全**: 密码保护
 
-1. 在侧边栏点击 ⚙️ 图标进入配置管理页面
-2. 选择需要配置的模块（代理/OTP/卡片/购票人）
-3. 创建分组（OTP 除外）
-4. 批量导入或逐个添加配置
-5. 点击"保存分组配置"保存
+### 日志数据库
 
-#### 代理批量导入示例
-
-```
-127.0.0.1:7897:user1:pass1
-192.168.1.1:8080:user2:pass2
-10.0.0.1:3128
-```
-
-## 界面特性
-
-- **深色主题**：专业的深色配色方案
-- **渐变设计**：现代化的渐变背景和按钮
-- **响应式布局**：适配不同屏幕尺寸
-- **自定义滚动条**：美观的细窄滚动条
-- **悬浮提示**：侧边栏图标悬浮显示功能名称
-- **表格编辑**：配置管理支持表格内直接编辑
-- **模态弹窗**：批量导入使用模态窗口
-
-## 开发说明
-
-### 添加新航司
-
-在 `src/views/airline.rs` 的 `AIRLINE_OPTIONS` 中添加：
-
-```rust
-AirlineOption {
-    code: "XX",
-    name: "航司名称",
-    url: "https://example.com",
-    request_preview: r#"{
-    "param1": "value1",
-    "param2": "value2"
-}"#,
-}
-```
-
-### 自定义样式
-
-主要样式文件位于 `assets/styling/main.css`，可根据需要修改。
-
-### 添加新路由
-
-1. 在 `src/main.rs` 的 `Route` 枚举中添加路由
-2. 在 `src/views/` 创建对应的视图组件
-3. 在 `src/components/sidebar.rs` 添加导航按钮
-
-## 特性亮点
-
-- ✅ 无编译警告
-- ✅ 类型安全的状态管理
-- ✅ 组件化设计
-- ✅ 实时响应式更新
-- ✅ 批量操作支持
-- ✅ 表格化数据展示
-- ✅ 友好的用户体验
-
-## 许可证
-
-MIT License
+- **位置**: 软件运行目录
+- **文件**: `logs.db`
+- **内容**: 任务执行日志
+- **安全**: 无密码（方便查看）
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎贡献代码！请查看 [开发者文档](DEVELOPER.md) 了解详情。
+
+## 许可证
+
+[根据项目实际情况填写]
+
+## 作者
+
+- **zilong** - liuzilong326@163.com
+
+## 致谢
+
+- [Dioxus](https://dioxuslabs.com/) - 优秀的 Rust UI 框架
+- [rusqlite](https://github.com/rusqlite/rusqlite) - SQLite 绑定
+- 所有贡献者
+
+---
+
+<div align="center">
+
+**[⬆ 回到顶部](#factbot---数据运维助手)**
+
+Made with ❤️ by zilong
+
+</div>

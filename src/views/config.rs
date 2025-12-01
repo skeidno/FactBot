@@ -297,7 +297,7 @@ fn ProxyGroupEditor(group: ProxyGroup, group_index: usize, proxy_groups: Signal<
     let mut current_page = use_signal(|| 1usize);
     
     let total_items = group.proxies.len();
-    let total_pages = (total_items + page_size() - 1) / page_size();
+    let total_pages = total_items.div_ceil(page_size());
     let start_index = (current_page() - 1) * page_size();
     let end_index = (start_index + page_size()).min(total_items);
 
@@ -662,7 +662,7 @@ fn OtpGroupEditor(group: OtpGroup, group_index: usize, otp_groups: Signal<Vec<Ot
     let mut current_page = use_signal(|| 1usize);
     
     let total_items = group.configs.len();
-    let total_pages = (total_items + page_size() - 1) / page_size();
+    let total_pages = total_items.div_ceil(page_size());
     let start_index = (current_page() - 1) * page_size();
     let end_index = (start_index + page_size()).min(total_items);
 
@@ -949,7 +949,7 @@ fn CardGroupEditor(group: CardGroup, group_index: usize, card_groups: Signal<Vec
     let mut current_page = use_signal(|| 1usize);
     
     let total_items = group.cards.len();
-    let total_pages = (total_items + page_size() - 1) / page_size();
+    let total_pages = total_items.div_ceil(page_size());
     let start_index = (current_page() - 1) * page_size();
     let end_index = (start_index + page_size()).min(total_items);
 
@@ -1235,7 +1235,7 @@ fn PassengerGroupEditor(group: PassengerGroup, group_index: usize, passenger_gro
     let mut current_page = use_signal(|| 1usize);
     
     let total_items = group.passengers.len();
-    let total_pages = (total_items + page_size() - 1) / page_size();
+    let total_pages = total_items.div_ceil(page_size());
     let start_index = (current_page() - 1) * page_size();
     let end_index = (start_index + page_size()).min(total_items);
 

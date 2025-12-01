@@ -4,6 +4,14 @@ version = "0.1.0"
 authors = ["zilong <liuzilong326@163.com>"]
 edition = "2021"
 
+[lib]
+name = "fact_bot"
+path = "src/lib.rs"
+
+[[bin]]
+name = "fact-bot"
+path = "src/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -14,9 +22,15 @@ serde_json = "1.0"
 rusqlite = { version = "0.32", features = ["bundled"] }
 directories = "5.0"
 image = "0.25"
+uuid = { version = "1.0", features = ["v4"] }
+thiserror = "1.0"
+chrono = "0.4"
+url = "2.5"
+tokio = { version = "1.0", features = ["full"] }
+colored = "2.1"
 
 [features]
-default = ["desktop"]
+default = ["desktop", "dev"]
 # The feature that are only required for the web = ["dioxus/web"] build target should be optional and only enabled in the web = ["dioxus/web"] feature
 web = ["dioxus/web"]
 # The feature that are only required for the desktop = ["dioxus/desktop"] build target should be optional and only enabled in the desktop = ["dioxus/desktop"] feature
@@ -25,3 +39,8 @@ desktop = ["dioxus/desktop"]
 mobile = ["dioxus/mobile"]
 # The feature that are only required for the server = ["dioxus/server"] build target should be optional and only enabled in the server = ["dioxus/server"] feature
 server = ["dioxus/server"]
+
+# 环境区分
+# dev 模式：DEBUG 日志正常打印和展示
+# 正式版（不启用 dev）：DEBUG 日志只入库，不打印，UI 不展示
+dev = []

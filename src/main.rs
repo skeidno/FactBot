@@ -1,8 +1,9 @@
 use dioxus::prelude::*;
 
-use views::{Airline, Blog, Home, Config, Notice, Help};
+use views::{Airline, Blog, Home, Config, Notice, Help, Logs};
 use components::Sidebar;
 
+pub mod common;
 mod components;
 mod views;
 mod db;
@@ -24,6 +25,8 @@ enum Route {
         Notice {},
         #[route("/help")]
         Help {},
+        #[route("/logs")]
+        Logs {},
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.svg");
@@ -101,7 +104,8 @@ fn main() {
 #[component]
 fn App() -> Element {
     // 初始化数据库（首次启动会自动标记）
-    let _ = db::is_first_launch();
+    // 这会同时初始化配置数据库和日志数据库
+    let _ = db::initialize_databases();
     
     rsx! {
         document::Link { rel: "icon", href: FAVICON }

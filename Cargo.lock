@@ -635,6 +635,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 
 [[package]]
+name = "colored"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
+dependencies = [
+ "lazy_static",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "combine"
 version = "4.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1960,6 +1970,8 @@ dependencies = [
 name = "fact-bot"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "colored",
  "dioxus",
  "dioxus-desktop",
  "directories",
@@ -1967,6 +1979,10 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "url",
+ "uuid",
 ]
 
 [[package]]
@@ -5588,6 +5604,7 @@ dependencies = [
  "bytes",
  "libc",
  "mio",
+ "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2",
@@ -6013,6 +6030,7 @@ version = "1.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f87b8aa10b915a06587d0dec516c282ff295b475d94abf425d62b57710070a2"
 dependencies = [
+ "getrandom 0.3.4",
  "js-sys",
  "serde",
  "wasm-bindgen",

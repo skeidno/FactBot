@@ -29,6 +29,7 @@ pub fn Sidebar() -> Element {
                         SidebarIcon { icon: "🏠", label: "首页", to: Some(Route::Home {}) }
                         SidebarIcon { icon: "✈️", label: "航司报价", to: Some(Route::Airline {}) }
                         SidebarIcon { icon: "⚙️", label: "配置管理", to: Some(Route::Config {}) }
+                        SidebarIcon { icon: "📋", label: "日志查看", to: Some(Route::Logs {}) }
                     }
 
                     // 底部辅助图标（帮助、通知等）
