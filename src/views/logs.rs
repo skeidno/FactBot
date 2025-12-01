@@ -273,6 +273,7 @@ pub fn Logs() -> Element {
                                 if cfg!(feature = "dev") {
                                     option { value: "DEBUG", "🔵 DEBUG" }
                                 }
+                                option { value: "SUCCESS", "🟢 SUCCESS" }
                                 option { value: "INFO", "⚪ INFO" }
                                 option { value: "WARN", "🟡 WARN" }
                                 option { value: "ERROR", "🔴 ERROR" }
@@ -464,6 +465,7 @@ pub fn Logs() -> Element {
 fn LogTableRow(log: LogEntry) -> Element {
     let (level_color, level_bg, level_icon) = match log.log_level.as_str() {
         "DEBUG" => ("#3b82f6", "#dbeafe", "🔵"),
+        "SUCCESS" => ("#10b981", "#d1fae5", "🟢"),
         "INFO" => ("#6b7280", "#f3f4f6", "⚪"),
         "WARN" => ("#f59e0b", "#fef3c7", "🟡"),
         "ERROR" => ("#ef4444", "#fee2e2", "🔴"),

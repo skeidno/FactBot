@@ -319,7 +319,11 @@ pub fn Airline() -> Element {
 
                 // 标题区
                 section {
-                    style: "background:linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-radius:20px; padding:28px 32px; border:1px solid #c7d2fe; box-shadow:0 4px 20px rgba(79, 70, 229, 0.1);",
+                    style: "background:linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-radius:20px; padding:28px 32px; border:1px solid #c7d2fe; box-shadow:0 4px 20px rgba(79, 70, 229, 0.1); position:relative;",
+                    
+                    // 右上角端口号和健康状态显示
+                    BackendStatus {}
+                    
                     h1 {
                         style: "font-size:26px; font-weight:700; margin:0 0 10px 0; color:#312e81; letter-spacing:-0.02em;",
                         "航司报价查询控制台"
@@ -631,3 +635,117 @@ fn InfoTile(props: InfoTileProps) -> Element {
     }
 }
 
+
+/// 后台健康状态组件
+#[component]
+fn BackendStatus() -> Element {
+    let backend_port = use_signal(|| "8080".to_string());
+    let mut is_healthy = use_signal(|| false);
+    let mut is_checking = use_signal(|| true);
+    let mut last_status = use_signal(|| None::<bool>);
+    let mut first_check = use_signal(|| true);
+    
+    use_effect(move || {
+        spawn(async move {
+            use chrono::Local;
+            use uuid::Uuid;
+            
+            let task_uuid = Uuid::new_v4().to_string();
+            
+            if first_check() {
+                let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+                let _ = crate::db::save_log(
+                    "Backend Health Check",
+                    "INFO",
+                    &task_uuid,
+                    &timestamp,
+                    "开始检查 Web 后台健康状态"
+                );
+                first_check.set(false);
+            }
+            
+            loop {
+                is_checking.set(true);
+                
+                let port = backend_port();
+                let health_url = format!("http://localhost:{}/health", port);
+                
+                let current_healthy = match reqwest::get(&health_url).await {
+                    Ok(response) => response.status().is_success(),
+                    Err(_) => false,
+                };
+                
+                is_healthy.set(current_healthy);
+                is_checking.set(false);
+                
+                let status_changed = match last_status() {
+                    None => true,
+                    Some(last) => last != current_healthy,
+                };
+                
+                if status_changed {
+                    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+                    let (status_text, log_level) = if current_healthy {
+                        ("运行中", "SUCCESS")
+                    } else {
+                        ("离线", "ERROR")
+                    };
+                    let message = format!("Web 后台状态: {}", status_text);
+                    
+                    let _ = crate::db::save_log(
+                        "Backend Health Check",
+                        log_level,
+                        &task_uuid,
+                        &timestamp,
+                        &message
+                    );
+                    
+                    last_status.set(Some(current_healthy));
+                }
+                
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            }
+        });
+    });
+    
+    let (status_color, status_text, status_bg) = if is_checking() {
+        ("#94a3b8", "检查中", "rgba(148, 163, 184, 0.1)")
+    } else if is_healthy() {
+        ("#10b981", "运行中", "rgba(16, 185, 129, 0.1)")
+    } else {
+        ("#ef4444", "离线", "rgba(239, 68, 68, 0.1)")
+    };
+    
+    rsx! {
+        div {
+            style: "position:absolute; top:28px; right:32px; background:{status_bg}; border:1px solid {status_color}; border-radius:12px; padding:8px 16px; display:flex; align-items:center; gap:12px;",
+            
+            div {
+                style: "display:flex; align-items:center; gap:6px;",
+                div {
+                    style: "width:10px; height:10px; border-radius:50%; background:{status_color}; box-shadow:0 0 8px {status_color};",
+                }
+                span {
+                    style: "font-size:13px; font-weight:600; color:{status_color};",
+                    "{status_text}"
+                }
+            }
+            
+            div {
+                style: "width:1px; height:20px; background:rgba(148, 163, 184, 0.3);",
+            }
+            
+            div {
+                style: "display:flex; align-items:center; gap:6px;",
+                span {
+                    style: "font-size:13px; font-weight:600; color:#4338ca;",
+                    "端口:"
+                }
+                span {
+                    style: "font-size:15px; font-weight:700; color:#4f46e5; font-family:monospace;",
+                    "{backend_port}"
+                }
+            }
+        }
+    }
+}

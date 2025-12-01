@@ -65,6 +65,16 @@ fn main() {
         let _ = fs::remove_dir_all(&webview_cache);
     }
 
+    // 启动 Web API 服务器（后台线程）
+    std::thread::spawn(|| {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            if let Err(e) = fact_bot::api_server::start_server().await {
+                eprintln!("Web API 服务器启动失败: {}", e);
+            }
+        });
+    });
+
     // 加载图标
     let icon_bytes = include_bytes!("../assets/favicon.ico");
     let icon = Icon::from_rgba(load_icon_rgba(icon_bytes), 256, 256)
