@@ -11,22 +11,21 @@ mod db;
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
 enum Route {
-    // #[layout(Navbar)]
     #[layout(Sidebar)]
         #[route("/")]
         Home {},
-        #[route("/config")]
-        ConfigView {},
-        #[route("/blog/:id")]
-        Blog { id: i32 },
         #[route("/airlines")]
         Airline {},
+        #[route("/config")]
+        ConfigView {},
+        #[route("/logs")]
+        Logs {},
         #[route("/notice")]
         Notice {},
         #[route("/help")]
         Help {},
-        #[route("/logs")]
-        Logs {},
+        #[route("/blog/:id")]
+        Blog { id: i32 },
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.svg");
