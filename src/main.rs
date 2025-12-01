@@ -69,7 +69,7 @@ fn main() {
     std::thread::spawn(|| {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
-            if let Err(e) = fact_bot::api_server::start_server().await {
+            if let Err(e) = fact_bot::api::start_server().await {
                 eprintln!("Web API 服务器启动失败: {}", e);
             }
         });
