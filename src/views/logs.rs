@@ -227,7 +227,7 @@ pub fn Logs() -> Element {
                                     selected_task_uuid.set(String::new());
                                     update_task_uuids();
                                 },
-                                style: "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:white; color:#111827; cursor:pointer; -webkit-appearance:none; appearance:none;",
+                                style: "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:white; color:#111827; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; box-shadow:none; outline:none;",
                                 option { value: "", "-- 请选择任务名称 --" }
                                 for name in task_names() {
                                     option { value: "{name}", "{name}" }
@@ -246,9 +246,9 @@ pub fn Logs() -> Element {
                                 onchange: move |evt| selected_task_uuid.set(evt.value()),
                                 disabled: selected_task_name().is_empty(),
                                 style: if selected_task_name().is_empty() {
-                                    "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:#f3f4f6; color:#9ca3af; cursor:not-allowed; -webkit-appearance:none; appearance:none;"
+                                    "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:#f3f4f6; color:#9ca3af; cursor:not-allowed; -webkit-appearance:none; -moz-appearance:none; appearance:none; box-shadow:none; outline:none;"
                                 } else {
-                                    "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:white; color:#111827; cursor:pointer; -webkit-appearance:none; appearance:none;"
+                                    "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:white; color:#111827; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; box-shadow:none; outline:none;"
                                 },
                                 option { value: "", "-- 全部 UUID --" }
                                 for uuid in task_uuids() {
@@ -266,7 +266,7 @@ pub fn Logs() -> Element {
                             select {
                                 value: selected_log_level(),
                                 onchange: move |evt| selected_log_level.set(evt.value()),
-                                style: "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:white; color:#111827; cursor:pointer; -webkit-appearance:none; appearance:none;",
+                                style: "width:100%; padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; font-size:14px; background:white; color:#111827; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; box-shadow:none; outline:none;",
                                 option { value: "", "-- 全部级别 --" }
                                 // dev 模式：显示 DEBUG 选项
                                 // 正式版：不显示 DEBUG 选项
