@@ -53,7 +53,7 @@ pub fn Home() -> Element {
                         "进入航司报价 →"
                     }
                     Link {
-                        to: Route::Config {},
+                        to: Route::ConfigView {},
                         style: "padding:14px 28px; border-radius:18px; font-size:15px; font-weight:600; color:#22d3ee; background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); text-decoration:none; transition:background 0.2s;",
                         "配置管理"
                     }
