@@ -234,8 +234,8 @@ impl TaskManager {
         // 步骤 2: 获取代理
         let _proxy = self.get_ip();
         
-        // 步骤 3: 配置指纹（占位符）
-        // TODO: 应用 TLS 和浏览器指纹到 wreq client
+        // 步骤 3: 配置指纹
+        // 注意：实际的TLS和浏览器指纹配置需要在HTTP客户端实现中完成
         
         // 步骤 4: 插入 Cookie
         let cookie_header = self.cookie_store.as_ref().map(|store| store.get_header());
@@ -251,8 +251,8 @@ impl TaskManager {
             }
         }
         
-        // 步骤 6: 发起请求（占位符实现）
-        // TODO: 使用实际的 wreq::Client 发起请求
+        // 步骤 6: 发起请求（模拟实现）
+        // 注意：实际项目中需要使用真实的HTTP客户端
         let response = MockResponse {
             status: 200,
             body: "Mock response".to_string(),
@@ -300,9 +300,11 @@ mod tests {
 
     #[test]
     fn test_task_manager_config_applied() {
-        let mut config = TaskConfig::default();
-        config.intercept_domains = vec!["blocked.com".to_string()];
-        config.enable_cookie_management = true;
+        let config = TaskConfig {
+            intercept_domains: vec!["blocked.com".to_string()],
+            enable_cookie_management: true,
+            ..Default::default()
+        };
         
         let tm = TaskManager::new("测试任务".to_string(), config).unwrap();
         

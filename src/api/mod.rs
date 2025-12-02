@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 
 mod health;
 mod airline;
-mod captcha;
+pub mod captcha;
 mod register;
 
 /// 启动 Web API 服务器

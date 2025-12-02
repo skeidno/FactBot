@@ -500,7 +500,7 @@ pub fn Airline() -> Element {
                                     search_params_str
                                 );
                                 
-                                // TODO: 这里可以添加实际的 API 调用
+                                // 模拟API调用
                                 query_result.set(format!("✓ 查询请求已发送\n\n随机选择的代理：{}:{}\n\n完整请求数据：\n{}", proxy_ip, proxy_port, request_data));
                                 is_querying.set(false);
                             },

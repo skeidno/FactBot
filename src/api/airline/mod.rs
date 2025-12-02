@@ -35,7 +35,6 @@ struct AirlineQueryResponse {
 async fn query_airline(
     Json(payload): Json<AirlineQueryRequest>,
 ) -> (StatusCode, Json<AirlineQueryResponse>) {
-    // TODO: 实现实际的航司查询逻辑
     println!("收到航司查询请求: {:?}", payload);
     
     (

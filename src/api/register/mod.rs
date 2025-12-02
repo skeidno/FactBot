@@ -42,7 +42,6 @@ struct AccountInfo {
 async fn create_account(
     Json(payload): Json<RegisterRequest>,
 ) -> (StatusCode, Json<RegisterResponse>) {
-    // TODO: 实现实际的注册逻辑
     println!("收到注册请求，平台: {}", payload.platform);
     
     (
