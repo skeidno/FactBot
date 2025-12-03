@@ -15,6 +15,8 @@ pub async fn start_server() -> Result<(), Box<dyn std::error::Error>> {
         .nest("/api/airline", airline::routes())
         // 验证码识别服务
         .nest("/api/captcha", captcha::routes())
+        // 验证码识别服务（直接访问，兼容浏览器）
+        .nest("/api", captcha::direct_routes())
         // 注册机服务
         .nest("/api/register", register::routes());
 

@@ -3,6 +3,7 @@ use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+// Python 验证码识别服务的地址（运行在 8000 端口）
 const API_BASE_URL: &str = "http://localhost:8000";
 
 /// 验证码识别路由
@@ -17,6 +18,15 @@ pub fn routes() -> Router {
         .route("/anticap/slide", post(anticap_slide))
         .route("/anticap/rotate", post(anticap_rotate))
         .route("/anticap/compare", post(anticap_compare))
+}
+
+/// 额外的路由（用于兼容直接访问）
+pub fn direct_routes() -> Router {
+    Router::new()
+        .route("/click", post(ddddocr_click))
+        .route("/ocr", post(ddddocr_ocr))
+        .route("/det", post(ddddocr_det))
+        .route("/slide", post(ddddocr_slide))
 }
 
 // ============ 通用请求/响应结构 ============
@@ -70,6 +80,14 @@ struct DdddocrSlideRequest {
 struct DdddocrClickRequest {
     image: String,
     #[serde(default)]
+    question: Option<String>,
+}
+
+// API 请求结构（用于发送给 Python 服务）
+#[derive(Debug, Serialize)]
+struct ClickApiRequest {
+    image: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     question: Option<String>,
 }
 
@@ -714,13 +732,15 @@ async fn ddddocr_slide(Json(payload): Json<DdddocrSlideRequest>) -> (StatusCode,
 
 /// ddddocr - 点选验证码
 async fn ddddocr_click(Json(payload): Json<DdddocrClickRequest>) -> (StatusCode, Json<Value>) {
+    let api_request = ClickApiRequest {
+        image: payload.image,
+        question: payload.question,
+    };
+    
     let client = reqwest::Client::new();
     let response = match client
         .post(format!("{}/api/click", API_BASE_URL))
-        .json(&serde_json::json!({
-            "image": payload.image,
-            "question": payload.question
-        }))
+        .json(&api_request)
         .send()
         .await
     {
