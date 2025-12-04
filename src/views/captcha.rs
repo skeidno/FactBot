@@ -83,7 +83,7 @@ pub fn Captcha() -> Element {
     rsx! {
         div {
             class: "captcha-scroll-container",
-            style: "height:100%; overflow-y:auto; overflow-x:hidden; padding:24px 16px 24px 0;",
+            style: "height:100%; overflow-y:auto; overflow-x:hidden; padding:24px 16px 24px 0; scrollbar-width:thin; scrollbar-color:#cbd5e1 transparent;",
 
             div {
                 style: "display:flex; flex-direction:column; gap:28px; max-width:1400px; margin:0 auto;",
@@ -430,89 +430,10 @@ fn ImageUploader(image_base64: Signal<String>, image2_base64: Signal<String>, se
                                 src: "data:image/png;base64,{image_base64()}",
                                 style: "max-width:100%; height:auto; border-radius:6px; display:block; image-rendering:crisp-edges;",
                             }
-                            // 标注层
+                            // 标注层（双图旋转不显示标注，因为会叠加显示）
                             if let Some(resp) = api_response() {
-                                svg {
-                                    style: "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;",
-                                    preserve_aspect_ratio: "xMidYMid meet",
-                                    
-                                    // 绘制检测框（目标检测）
-                                    if let Some(objects) = &resp.objects {
-                                        for (idx, obj) in objects.iter().enumerate() {
-                                            g {
-                                                rect {
-                                                    x: "{obj.bbox[0]}",
-                                                    y: "{obj.bbox[1]}",
-                                                    width: "{obj.bbox[2] - obj.bbox[0]}",
-                                                    height: "{obj.bbox[3] - obj.bbox[1]}",
-                                                    fill: "none",
-                                                    stroke: "#10b981",
-                                                    stroke_width: "2",
-                                                    rx: "2",
-                                                }
-                                                circle {
-                                                    cx: "{obj.center[0]}",
-                                                    cy: "{obj.center[1]}",
-                                                    r: "3",
-                                                    fill: "#ef4444",
-                                                }
-                                                text {
-                                                    x: "{obj.bbox[0]}",
-                                                    y: "{obj.bbox[1] - 5}",
-                                                    fill: "#10b981",
-                                                    font_size: "12",
-                                                    font_weight: "bold",
-                                                    "{idx + 1}: {obj.label}"
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    // 绘制点击目标
-                                    if let Some(targets) = &resp.targets {
-                                        for (idx, target) in targets.iter().enumerate() {
-                                            g {
-                                                circle {
-                                                    cx: "{target.position.x}",
-                                                    cy: "{target.position.y}",
-                                                    r: "8",
-                                                    fill: "rgba(239, 68, 68, 0.3)",
-                                                    stroke: "#ef4444",
-                                                    stroke_width: "2",
-                                                }
-                                                text {
-                                                    x: "{target.position.x}",
-                                                    y: "{target.position.y - 12}",
-                                                    fill: "#ef4444",
-                                                    font_size: "12",
-                                                    font_weight: "bold",
-                                                    text_anchor: "middle",
-                                                    "{idx + 1}: {target.label}"
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    // 绘制滑块位置
-                                    if let Some(distance) = resp.distance {
-                                        line {
-                                            x1: "{distance}",
-                                            y1: "0",
-                                            x2: "{distance}",
-                                            y2: "100",
-                                            stroke: "#3b82f6",
-                                            stroke_width: "2",
-                                            stroke_dasharray: "5,5",
-                                        }
-                                        text {
-                                            x: "{distance + 5}",
-                                            y: "15",
-                                            fill: "#3b82f6",
-                                            font_size: "12",
-                                            font_weight: "bold",
-                                            "{distance}px"
-                                        }
-                                    }
+                                if !matches!(selected_type(), CaptchaType::AnticapRotateDouble) {
+                                    AnnotationLayer { response: resp.clone(), image_id: "main-image".to_string(), is_background: false }
                                 }
                             }
                         }
@@ -543,54 +464,66 @@ fn ImageUploader(image_base64: Signal<String>, image2_base64: Signal<String>, se
                             onchange: handle_upload2,
                         }
                     } else {
-                        div {
-                            style: "position:relative; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;",
+                        // 双图旋转验证码特殊处理：叠加显示
+                        if matches!(selected_type(), CaptchaType::AnticapRotateDouble) {
                             div {
-                                style: "position:relative; display:inline-block;",
-                                img {
-                                    id: "second-image",
-                                    src: "data:image/png;base64,{image2_base64()}",
-                                    style: "max-width:100%; height:auto; border-radius:6px; display:block; image-rendering:crisp-edges;",
-                                }
-                                // 标注层（滑块位置显示在背景图上）
-                                if let Some(resp) = api_response() {
-                                    if let Some(distance) = resp.distance {
-                                        svg {
-                                            style: "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;",
-                                            preserve_aspect_ratio: "xMidYMid meet",
-                                            
-                                            line {
-                                                x1: "{distance}",
-                                                y1: "0",
-                                                x2: "{distance}",
-                                                y2: "100%",
-                                                stroke: "#3b82f6",
-                                                stroke_width: "3",
-                                                stroke_dasharray: "8,4",
-                                            }
-                                            rect {
-                                                x: "{distance - 2}",
-                                                y: "0",
-                                                width: "4",
-                                                height: "100%",
-                                                fill: "rgba(59, 130, 246, 0.2)",
-                                            }
-                                            text {
-                                                x: "{distance + 8}",
-                                                y: "25",
-                                                fill: "#3b82f6",
-                                                font_size: "14",
-                                                font_weight: "bold",
-                                                "← {distance}px"
+                                style: "position:relative; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;",
+                                div {
+                                    style: "position:relative; display:inline-block;",
+                                    // 外圆图（背景）
+                                    img {
+                                        id: "second-image",
+                                        src: "data:image/png;base64,{image2_base64()}",
+                                        style: "max-width:100%; height:auto; border-radius:6px; display:block; image-rendering:crisp-edges;",
+                                    }
+                                    // 内圆图（叠加在上面，根据角度旋转，等比缩放到外圆图尺寸）
+                                    if let Some(resp) = api_response() {
+                                        if let Some(angle) = resp.inner_angle {
+                                            {
+                                                // 反向旋转：API 返回的角度需要取负值
+                                                let rotate_angle = -angle;
+                                                rsx! {
+                                                    img {
+                                                        src: "data:image/png;base64,{image_base64()}",
+                                                        style: "position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; transform:rotate({rotate_angle}deg); transform-origin:center; image-rendering:crisp-edges;",
+                                                    }
+                                                    // 角度标签（显示原始角度）
+                                                    div {
+                                                        style: "position:absolute; top:10px; left:10px; background:#8b5cf6; color:white; padding:6px 12px; border-radius:6px; font-size:14px; font-weight:bold; box-shadow:0 2px 8px rgba(139, 92, 246, 0.4); z-index:10;",
+                                                        "↺ {angle:.1}°"
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }
+                                button {
+                                    onclick: move |_| image2_base64.set(String::new()),
+                                    style: "margin-top:8px; width:100%; padding:8px; border-radius:6px; border:1px solid #d1d5db; background:white; color:#374151; font-size:13px; cursor:pointer;",
+                                    "🗑️ 移除"
+                                }
                             }
-                            button {
-                                onclick: move |_| image2_base64.set(String::new()),
-                                style: "margin-top:8px; width:100%; padding:8px; border-radius:6px; border:1px solid #d1d5db; background:white; color:#374151; font-size:13px; cursor:pointer;",
-                                "🗑️ 移除"
+                        } else {
+                            // 其他类型：正常显示副图
+                            div {
+                                style: "position:relative; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;",
+                                div {
+                                    style: "position:relative; display:inline-block;",
+                                    img {
+                                        id: "second-image",
+                                        src: "data:image/png;base64,{image2_base64()}",
+                                        style: "max-width:100%; height:auto; border-radius:6px; display:block; image-rendering:crisp-edges;",
+                                    }
+                                    // 标注层（滑块位置显示在背景图上）
+                                    if let Some(resp) = api_response() {
+                                        AnnotationLayer { response: resp.clone(), image_id: "second-image".to_string(), is_background: true }
+                                    }
+                                }
+                                button {
+                                    onclick: move |_| image2_base64.set(String::new()),
+                                    style: "margin-top:8px; width:100%; padding:8px; border-radius:6px; border:1px solid #d1d5db; background:white; color:#374151; font-size:13px; cursor:pointer;",
+                                    "🗑️ 移除"
+                                }
                             }
                         }
                     }
@@ -640,6 +573,30 @@ fn RecognizeButton(
                     match client.post(&url).json(&body).send().await {
                         Ok(resp) => {
                             if let Ok(api_resp) = resp.json::<ApiResponse>().await {
+                                // 调试信息 - 显示原始 API 响应
+                                #[cfg(debug_assertions)]
+                                {
+                                    println!("=== API 原始响应 ===");
+                                    println!("{}", serde_json::to_string_pretty(&api_resp).unwrap_or_else(|_| "无法序列化".to_string()));
+                                    println!("==================");
+                                    
+                                    if let Some(ref targets) = api_resp.targets {
+                                        println!("点选目标数量: {}", targets.len());
+                                        for (i, t) in targets.iter().enumerate() {
+                                            println!("  目标{}: ({}, {}) - {}", i+1, t.position.x, t.position.y, t.label);
+                                        }
+                                    }
+                                    if let Some(ref objects) = api_resp.objects {
+                                        println!("检测对象数量: {}", objects.len());
+                                    }
+                                    if let Some(distance) = api_resp.distance {
+                                        println!("滑块距离: {} px", distance);
+                                    }
+                                    if let Some(angle) = api_resp.inner_angle {
+                                        println!("旋转角度: {:.1}°", angle);
+                                    }
+                                }
+                                
                                 result_text.set(format_result(api_resp.clone()));
                                 api_response.set(Some(api_resp));
                             } else {
@@ -783,8 +740,281 @@ fn format_result(resp: ApiResponse) -> String {
 }
 
 #[component]
+fn AnnotationLayer(response: ApiResponse, image_id: String, is_background: bool) -> Element {
+    let _ = (image_id, is_background); // 暂时不使用，避免警告
+    
+    // 不使用 viewBox，让 SVG 使用像素坐标系统
+    rsx! {
+        svg {
+            style: "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;",
+            
+            // 绘制检测框（图标检测、文字检测）
+            if let Some(objects) = &response.objects {
+                for (idx, obj) in objects.iter().enumerate() {
+                    g {
+                        key: "{idx}",
+                        // 检测框
+                        rect {
+                            x: "{obj.bbox[0]}",
+                            y: "{obj.bbox[1]}",
+                            width: "{obj.bbox[2] - obj.bbox[0]}",
+                            height: "{obj.bbox[3] - obj.bbox[1]}",
+                            fill: "none",
+                            stroke: "#10b981",
+                            stroke_width: "2",
+                            rx: "2",
+                        }
+                        // 中心点
+                        circle {
+                            cx: "{obj.center[0]}",
+                            cy: "{obj.center[1]}",
+                            r: "4",
+                            fill: "#ef4444",
+                        }
+                        // 标签背景
+                        rect {
+                            x: "{obj.bbox[0]}",
+                            y: "{obj.bbox[1] - 20}",
+                            width: "{(obj.label.len() as i32 + 3) * 7}",
+                            height: "18",
+                            fill: "#10b981",
+                            rx: "3",
+                        }
+                        // 标签文字
+                        text {
+                            x: "{obj.bbox[0] + 3}",
+                            y: "{obj.bbox[1] - 7}",
+                            fill: "white",
+                            font_size: "12",
+                            font_weight: "bold",
+                            "{idx + 1}: {obj.label}"
+                        }
+                    }
+                }
+            }
+            
+            // 绘制点击目标
+            if let Some(targets) = &response.targets {
+                for (idx, target) in targets.iter().enumerate() {
+                    g {
+                        key: "{idx}",
+                        // 点击圆圈
+                        circle {
+                            cx: "{target.position.x}",
+                            cy: "{target.position.y}",
+                            r: "10",
+                            fill: "rgba(239, 68, 68, 0.3)",
+                            stroke: "#ef4444",
+                            stroke_width: "2",
+                        }
+                        // 序号
+                        circle {
+                            cx: "{target.position.x}",
+                            cy: "{target.position.y}",
+                            r: "6",
+                            fill: "#ef4444",
+                        }
+                        text {
+                            x: "{target.position.x}",
+                            y: "{target.position.y + 4}",
+                            fill: "white",
+                            font_size: "10",
+                            font_weight: "bold",
+                            text_anchor: "middle",
+                            "{idx + 1}"
+                        }
+                        // 标签
+                        if !target.label.is_empty() {
+                            rect {
+                                x: "{target.position.x - (target.label.len() as i32 * 3)}",
+                                y: "{target.position.y - 25}",
+                                width: "{target.label.len() as i32 * 7}",
+                                height: "16",
+                                fill: "#ef4444",
+                                rx: "3",
+                            }
+                            text {
+                                x: "{target.position.x}",
+                                y: "{target.position.y - 13}",
+                                fill: "white",
+                                font_size: "11",
+                                font_weight: "bold",
+                                text_anchor: "middle",
+                                "{target.label}"
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 绘制滑块位置（垂直线）
+            if let Some(distance) = response.distance {
+                g {
+                    // 虚线
+                    line {
+                        x1: "{distance}",
+                        y1: "0",
+                        x2: "{distance}",
+                        y2: "100%",
+                        stroke: "#3b82f6",
+                        stroke_width: "3",
+                        stroke_dasharray: "8,4",
+                    }
+                    // 半透明区域
+                    rect {
+                        x: "{distance - 2}",
+                        y: "0",
+                        width: "4",
+                        height: "100%",
+                        fill: "rgba(59, 130, 246, 0.2)",
+                    }
+                    // 标签背景
+                    {
+                        let label_text = format!("← {}px", distance);
+                        let label_width = label_text.len() as i32 * 8 + 10;
+                        rsx! {
+                            rect {
+                                x: "{distance + 5}",
+                                y: "10",
+                                width: "{label_width}",
+                                height: "22",
+                                fill: "#3b82f6",
+                                rx: "4",
+                            }
+                            text {
+                                x: "{distance + 10}",
+                                y: "26",
+                                fill: "white",
+                                font_size: "14",
+                                font_weight: "bold",
+                                "{label_text}"
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 绘制旋转角度指示（仅单图旋转，双图旋转用叠加显示）
+            if let Some(angle) = response.inner_angle {
+                if !is_background && response.distance.is_none() && response.objects.is_none() && response.targets.is_none() {
+                    {
+                        // API 返回的角度直接显示（逆时针为正）
+                        let angle_text = format!("↺ {:.1}°", angle);
+                        rsx! {
+                            g {
+                                // 旋转方向指示弧线（逆时针）
+                                path {
+                                    d: "M 240,140 A 40,40 0 0,0 200,100",
+                                    fill: "none",
+                                    stroke: "#8b5cf6",
+                                    stroke_width: "4",
+                                    stroke_linecap: "round",
+                                }
+                                // 箭头（逆时针方向）
+                                polygon {
+                                    points: "200,100 205,105 197,103",
+                                    fill: "#8b5cf6",
+                                }
+                                // 中心点
+                                circle {
+                                    cx: "200",
+                                    cy: "150",
+                                    r: "6",
+                                    fill: "#8b5cf6",
+                                }
+                                // 角度标签背景
+                                rect {
+                                    x: "165",
+                                    y: "20",
+                                    width: "70",
+                                    height: "24",
+                                    fill: "#8b5cf6",
+                                    rx: "4",
+                                }
+                                // 角度标签文字
+                                text {
+                                    x: "200",
+                                    y: "37",
+                                    fill: "white",
+                                    font_size: "14",
+                                    font_weight: "bold",
+                                    text_anchor: "middle",
+                                    "{angle_text}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 绘制旋转目标位置（AntiCAP 单图旋转的 target 坐标）
+            if let Some(ref result) = response.result {
+                if let Some(target_array) = result.as_array() {
+                    if target_array.len() == 2 {
+                        if let (Some(x), Some(y)) = (target_array[0].as_f64(), target_array[1].as_f64()) {
+                            {
+                                let x_i32 = x as i32;
+                                let y_i32 = y as i32;
+                                rsx! {
+                                    g {
+                                        // 目标位置十字标记
+                                        line {
+                                            x1: "{x_i32 - 15}",
+                                            y1: "{y_i32}",
+                                            x2: "{x_i32 + 15}",
+                                            y2: "{y_i32}",
+                                            stroke: "#ef4444",
+                                            stroke_width: "3",
+                                        }
+                                        line {
+                                            x1: "{x_i32}",
+                                            y1: "{y_i32 - 15}",
+                                            x2: "{x_i32}",
+                                            y2: "{y_i32 + 15}",
+                                            stroke: "#ef4444",
+                                            stroke_width: "3",
+                                        }
+                                        // 目标圆圈
+                                        circle {
+                                            cx: "{x_i32}",
+                                            cy: "{y_i32}",
+                                            r: "20",
+                                            fill: "none",
+                                            stroke: "#ef4444",
+                                            stroke_width: "2",
+                                        }
+                                        // 坐标标签
+                                        rect {
+                                            x: "{x_i32 + 25}",
+                                            y: "{y_i32 - 12}",
+                                            width: "100",
+                                            height: "24",
+                                            fill: "#ef4444",
+                                            rx: "4",
+                                        }
+                                        text {
+                                            x: "{x_i32 + 30}",
+                                            y: "{y_i32 + 5}",
+                                            fill: "white",
+                                            font_size: "12",
+                                            font_weight: "bold",
+                                            "({x_i32}, {y_i32})"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[component]
 fn ResultDisplay(result_text: String, api_response: Option<ApiResponse>) -> Element {
     let is_success = api_response.as_ref().map(|r| r.success).unwrap_or(false);
+    let mut show_raw = use_signal(|| false);
     
     rsx! {
         div {
@@ -795,18 +1025,35 @@ fn ResultDisplay(result_text: String, api_response: Option<ApiResponse>) -> Elem
             },
 
             div {
-                style: "display:flex; align-items:center; gap:8px; margin-bottom:12px;",
-                span {
-                    style: "font-size:24px;",
-                    if is_success { "✅" } else { "❌" }
+                style: "display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;",
+                div {
+                    style: "display:flex; align-items:center; gap:8px;",
+                    span {
+                        style: "font-size:24px;",
+                        if is_success { "✅" } else { "❌" }
+                    }
+                    h4 {
+                        style: if is_success {
+                            "margin:0; font-size:16px; font-weight:700; color:#065f46;"
+                        } else {
+                            "margin:0; font-size:16px; font-weight:700; color:#991b1b;"
+                        },
+                        if is_success { "识别成功" } else { "识别失败" }
+                    }
                 }
-                h4 {
-                    style: if is_success {
-                        "margin:0; font-size:16px; font-weight:700; color:#065f46;"
-                    } else {
-                        "margin:0; font-size:16px; font-weight:700; color:#991b1b;"
-                    },
-                    if is_success { "识别成功" } else { "识别失败" }
+                button {
+                    onclick: move |_| show_raw.set(!show_raw()),
+                    style: "padding:6px 12px; border-radius:6px; border:1px solid #d1d5db; background:white; color:#374151; font-size:12px; cursor:pointer;",
+                    if show_raw() { "隐藏原始响应" } else { "查看原始响应" }
+                }
+            }
+
+            if show_raw() {
+                if let Some(ref resp) = api_response {
+                    pre {
+                        style: "margin:0 0 12px 0; padding:12px; background:#f9fafb; border-radius:6px; font-size:12px; color:#374151; font-family:monospace; white-space:pre-wrap; word-break:break-word; line-height:1.4; overflow-x:auto;",
+                        "{serde_json::to_string_pretty(resp).unwrap_or_else(|_| \"无法序列化\".to_string())}"
+                    }
                 }
             }
 

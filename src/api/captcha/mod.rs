@@ -756,6 +756,7 @@ async fn ddddocr_click(Json(payload): Json<DdddocrClickRequest>) -> (StatusCode,
 }
 
 /// AntiCAP - 通用 OCR 识别
+/// 支持类型: ocr, math, detection_icon, detection_text, single_rotate
 async fn anticap_ocr(Json(payload): Json<AnticapOcrRequest>) -> (StatusCode, Json<Value>) {
     let client = reqwest::Client::new();
     let response = match client
@@ -779,6 +780,7 @@ async fn anticap_ocr(Json(payload): Json<AnticapOcrRequest>) -> (StatusCode, Jso
 }
 
 /// AntiCAP - 滑块验证码
+/// 支持模式: match (匹配), comparison (比对)
 async fn anticap_slide(Json(payload): Json<AnticapSlideRequest>) -> (StatusCode, Json<Value>) {
     let client = reqwest::Client::new();
     let response = match client
@@ -803,6 +805,7 @@ async fn anticap_slide(Json(payload): Json<AnticapSlideRequest>) -> (StatusCode,
 }
 
 /// AntiCAP - 双图旋转验证码
+/// 返回内外圈的旋转角度
 async fn anticap_rotate(Json(payload): Json<AnticapRotateRequest>) -> (StatusCode, Json<Value>) {
     let client = reqwest::Client::new();
     let response = match client
@@ -826,6 +829,7 @@ async fn anticap_rotate(Json(payload): Json<AnticapRotateRequest>) -> (StatusCod
 }
 
 /// AntiCAP - 图片相似度对比
+/// 返回两张图片的相似度分数
 async fn anticap_compare(Json(payload): Json<AnticapCompareRequest>) -> (StatusCode, Json<Value>) {
     let client = reqwest::Client::new();
     let response = match client
