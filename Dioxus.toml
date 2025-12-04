@@ -8,6 +8,13 @@ icon = "assets/favicon.ico"
 # Asset directory for desktop builds
 asset_dir = "assets"
 
+# Default platform
+default_platform = "desktop"
+
+# Features for desktop builds
+[desktop]
+features = ["desktop", "dev"]
+
 [web.app]
 
 # HTML title tag content

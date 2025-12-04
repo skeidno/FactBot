@@ -21,3 +21,6 @@ pub use logs::Logs;
 
 mod captcha;
 pub use captcha::Captcha;
+
+mod captcha_help;
+pub use captcha_help::CaptchaHelp;

@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use views::{Airline, Blog, Home, Config as ConfigView, Notice, Help, Logs, Captcha};
+use views::{Airline, Blog, Home, Config as ConfigView, Notice, Help, Logs, Captcha, CaptchaHelp};
 use components::Sidebar;
 
 pub mod common;
@@ -18,6 +18,8 @@ enum Route {
         Airline {},
         #[route("/captcha")]
         Captcha {},
+        #[route("/captcha/help")]
+        CaptchaHelp {},
         #[route("/config")]
         ConfigView {},
         #[route("/logs")]

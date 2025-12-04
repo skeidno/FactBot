@@ -1,19 +1,12 @@
-use crate::Route;
 use dioxus::prelude::*;
+use dioxus_router::prelude::*;
 
 #[component]
-pub fn Help() -> Element {
+pub fn Help(cx: Scope) -> Element {
     rsx! {
-        style { r#"
-            .help-link:hover {{
-                background: rgba(59, 130, 246, 0.1);
-                transform: translateX(4px);
-            }}
-        "# }
-        
         div {
             style: "height:100%; overflow-y:auto; padding:24px 16px;",
-            
+
             div {
                 style: "max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:24px;",
 
@@ -32,26 +25,22 @@ pub fn Help() -> Element {
                 HelpSection {
                     title: "✈️ 航司报价查询",
                     color: "#3b82f6",
-                    route: None,
                 }
 
                 HelpSection {
                     title: "⚙️ 配置管理",
                     color: "#8b5cf6",
-                    route: None,
                 }
 
                 HelpSection {
                     title: "💾 数据存储",
                     color: "#10b981",
-                    route: None,
                 }
 
                 // 新增的验证码接口帮助部分
                 HelpSection {
                     title: "🔐 验证码识别 API",
                     color: "#fbbf24",
-                    route: Some(Route::CaptchaHelp {}),
                 }
 
                 section {
@@ -71,27 +60,27 @@ pub fn Help() -> Element {
 }
 
 #[component]
-fn HelpSection(title: &'static str, color: &'static str, route: Option<Route>) -> Element {
+fn HelpSection(title: &'static str, color: &'static str) -> Element {
+    let link = if title == "🔐 验证码识别 API" {
+        Some("/captcha/help")
+    } else {
+        None
+    };
+
     rsx! {
         section {
             style: "background:white; border-radius:18px; padding:28px 32px; border:1px solid #e5e7eb; box-shadow:0 6px 20px rgba(15,23,42,0.08);",
             h2 {
                 style: "font-size:22px; font-weight:700; margin:0 0 20px 0; color:{color};",
-                if let Some(route) = route {
-                    Link {
-                        to: route,
-                        style: "color:inherit; text-decoration:none; cursor:pointer; display:inline-block; transition:all 0.2s; padding:4px 8px; border-radius:6px;",
-                        class: "help-link",
-                        "{title}"
-                    }
-                } else {
+                a {
+                    href: "{link}",
                     "{title}"
                 }
             }
-            
+
             div {
                 style: "display:flex; flex-direction:column; gap:14px;",
-                
+
                 if title.contains("航司") {
                     HelpItem { label: "选择代理分组", desc: "从配置管理页面设置的代理分组中选择，系统会随机使用分组中的一个代理" }
                     HelpItem { label: "输入 Token", desc: "配置访问航司 API 所需的认证 Token" }

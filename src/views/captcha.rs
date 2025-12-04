@@ -697,12 +697,44 @@ fn format_result(resp: ApiResponse) -> String {
     let mut output = String::new();
 
     if let Some(result) = resp.result {
-        if let Some(s) = result.as_str() {
-            output.push_str(&format!("📝 结果: {}\n", s));
+        if let Some(result_array) = result.as_array() {
+            // 如果是数组（图标检测、文字检测的结果）
+            output.push_str(&format!("📝 检测到 {} 个目标:\n", result_array.len()));
+            for (_idx, item) in result_array.iter().take(5).enumerate() {
+                if let Some(item_obj) = item.as_object() {
+                    let bbox_opt = item_obj.get("bbox")
+                        .or_else(|| item_obj.get("box"))
+                        .and_then(|v| v.as_array());
+                    let label = item_obj.get("class")
+                        .or_else(|| item_obj.get("label"))
+                        .or_else(|| item_obj.get("text"))
+                        .or_else(|| item_obj.get("name"))
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("未知");
+                    
+                    if let Some(bbox) = bbox_opt {
+                        if bbox.len() >= 4 {
+                            output.push_str(&format!("  • {} - 位置: [{}, {}, {}, {}]\n", 
+                                label,
+                                bbox[0],
+                                bbox[1],
+                                bbox[2],
+                                bbox[3]
+                            ));
+                        }
+                    }
+                }
+            }
+        } else if let Some(s) = result.as_str() {
+            output.push_str(&format!("📝 识别结果: {}\n", s));
         } else if let Some(n) = result.as_i64() {
-            output.push_str(&format!("📝 结果: {}\n", n));
+            output.push_str(&format!("📝 识别结果: {}\n", n));
+        } else if let Some(f) = result.as_f64() {
+            output.push_str(&format!("📝 识别结果: {:.2}\n", f));
+        } else if let Some(b) = result.as_bool() {
+            output.push_str(&format!("📝 识别结果: {}\n", b));
         } else {
-            output.push_str(&format!("📝 结果: {}\n", result));
+            output.push_str(&format!("📝 识别结果: {}\n", result));
         }
     }
 
@@ -741,14 +773,114 @@ fn format_result(resp: ApiResponse) -> String {
 
 #[component]
 fn AnnotationLayer(response: ApiResponse, image_id: String, is_background: bool) -> Element {
-    let _ = (image_id, is_background); // 暂时不使用，避免警告
+    // 提取 result.target 数组（如果存在）
+    let target_array_opt = response.result.as_ref().and_then(|result| {
+        if let Some(target_obj) = result.as_object() {
+            target_obj.get("target").and_then(|v| v.as_array())
+        } else {
+            result.as_array()
+        }
+    });
     
-    // 不使用 viewBox，让 SVG 使用像素坐标系统
+    // 从 result 字段解析检测对象（AntiCAP 图标检测、文字检测）
+    let result_objects: Vec<(i32, i32, i32, i32, String)> = if response.objects.is_none() {
+        if let Some(ref result) = response.result {
+            if let Some(result_array) = result.as_array() {
+                result_array.iter().enumerate().filter_map(|(_idx, item)| {
+                    if let Some(item_obj) = item.as_object() {
+                        let bbox_opt = item_obj.get("bbox")
+                            .or_else(|| item_obj.get("box"))
+                            .and_then(|v| v.as_array());
+                        
+                        let label = item_obj.get("class")
+                            .or_else(|| item_obj.get("label"))
+                            .or_else(|| item_obj.get("text"))
+                            .or_else(|| item_obj.get("name"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .to_string();
+                        
+                        if let Some(bbox_array) = bbox_opt {
+                            if bbox_array.len() >= 4 {
+                                // 支持浮点数坐标
+                                if let (Some(x1), Some(y1), Some(x2), Some(y2)) = (
+                                    bbox_array[0].as_f64().or_else(|| bbox_array[0].as_i64().map(|v| v as f64)),
+                                    bbox_array[1].as_f64().or_else(|| bbox_array[1].as_i64().map(|v| v as f64)),
+                                    bbox_array[2].as_f64().or_else(|| bbox_array[2].as_i64().map(|v| v as f64)),
+                                    bbox_array[3].as_f64().or_else(|| bbox_array[3].as_i64().map(|v| v as f64)),
+                                ) {
+                                    return Some((x1 as i32, y1 as i32, x2 as i32, y2 as i32, label));
+                                }
+                            }
+                        }
+                    }
+                    None
+                }).collect()
+            } else {
+                vec![]
+            }
+        } else {
+            vec![]
+        }
+    } else {
+        vec![]
+    };
+    
+    // 生成唯一的 SVG ID
+    let svg_id = format!("annotation-svg-{}", image_id);
+    let script_content = format!(r#"
+        (function() {{
+            function updateAnnotationSVG() {{
+                const img = document.getElementById('{}');
+                const svg = document.getElementById('{}');
+                if (!img || !svg) return;
+                
+                // 等待图片加载完成
+                if (!img.complete) {{
+                    img.onload = updateAnnotationSVG;
+                    return;
+                }}
+                
+                const rect = img.getBoundingClientRect();
+                const imgWidth = img.naturalWidth || rect.width;
+                const imgHeight = img.naturalHeight || rect.height;
+                const displayWidth = rect.width;
+                const displayHeight = rect.height;
+                
+                // 设置 SVG viewBox 匹配图片原始尺寸
+                svg.setAttribute('viewBox', `0 0 ${{imgWidth}} ${{imgHeight}}`);
+                svg.setAttribute('width', displayWidth);
+                svg.setAttribute('height', displayHeight);
+            }}
+            
+            // 立即执行一次
+            setTimeout(updateAnnotationSVG, 100);
+            // 监听窗口大小变化
+            window.addEventListener('resize', updateAnnotationSVG);
+            // 监听图片加载
+            const img = document.getElementById('{}');
+            if (img) {{
+                if (img.complete) {{
+                    updateAnnotationSVG();
+                }} else {{
+                    img.addEventListener('load', updateAnnotationSVG);
+                }}
+            }}
+        }})();
+    "#, image_id, svg_id, image_id);
+    
     rsx! {
+        script {
+            dangerous_inner_html: script_content.as_str(),
+        }
+        
         svg {
-            style: "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;",
+            id: "{svg_id}",
+            style: "position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;",
+            preserve_aspect_ratio: "xMidYMid meet",
             
             // 绘制检测框（图标检测、文字检测）
+            // 首先尝试从 objects 字段获取
             if let Some(objects) = &response.objects {
                 for (idx, obj) in objects.iter().enumerate() {
                     g {
@@ -788,6 +920,58 @@ fn AnnotationLayer(response: ApiResponse, image_id: String, is_background: bool)
                             font_size: "12",
                             font_weight: "bold",
                             "{idx + 1}: {obj.label}"
+                        }
+                    }
+                }
+            }
+            
+            // 绘制从 result 字段解析的检测对象（AntiCAP 图标检测、文字检测）
+            for (idx, (x1, y1, x2, y2, label)) in result_objects.iter().enumerate() {
+                {
+                    let width = x2 - x1;
+                    let height = y2 - y1;
+                    let center_x = (x1 + x2) / 2;
+                    let center_y = (y1 + y2) / 2;
+                    let label_width = (label.len() as i32 + 3) * 7;
+                    rsx! {
+                        g {
+                            key: "{idx}",
+                            // 检测框
+                            rect {
+                                x: "{x1}",
+                                y: "{y1}",
+                                width: "{width}",
+                                height: "{height}",
+                                fill: "none",
+                                stroke: "#10b981",
+                                stroke_width: "2",
+                                rx: "2",
+                            }
+                            // 中心点
+                            circle {
+                                cx: "{center_x}",
+                                cy: "{center_y}",
+                                r: "4",
+                                fill: "#ef4444",
+                            }
+                            // 标签背景
+                            rect {
+                                x: "{x1}",
+                                y: "{y1 - 20}",
+                                width: "{label_width}",
+                                height: "18",
+                                fill: "#10b981",
+                                rx: "3",
+                            }
+                            // 标签文字
+                            text {
+                                x: "{x1 + 3}",
+                                y: "{y1 - 7}",
+                                fill: "white",
+                                font_size: "12",
+                                font_weight: "bold",
+                                "{idx + 1}: {label}"
+                            }
                         }
                     }
                 }
@@ -847,47 +1031,49 @@ fn AnnotationLayer(response: ApiResponse, image_id: String, is_background: bool)
                 }
             }
             
-            // 绘制滑块位置（垂直线）
+            // 绘制滑块位置（垂直线）- 显示在背景图上
             if let Some(distance) = response.distance {
-                g {
-                    // 虚线
-                    line {
-                        x1: "{distance}",
-                        y1: "0",
-                        x2: "{distance}",
-                        y2: "100%",
-                        stroke: "#3b82f6",
-                        stroke_width: "3",
-                        stroke_dasharray: "8,4",
-                    }
-                    // 半透明区域
-                    rect {
-                        x: "{distance - 2}",
-                        y: "0",
-                        width: "4",
-                        height: "100%",
-                        fill: "rgba(59, 130, 246, 0.2)",
-                    }
-                    // 标签背景
-                    {
-                        let label_text = format!("← {}px", distance);
-                        let label_width = label_text.len() as i32 * 8 + 10;
-                        rsx! {
-                            rect {
-                                x: "{distance + 5}",
-                                y: "10",
-                                width: "{label_width}",
-                                height: "22",
-                                fill: "#3b82f6",
-                                rx: "4",
-                            }
-                            text {
-                                x: "{distance + 10}",
-                                y: "26",
-                                fill: "white",
-                                font_size: "14",
-                                font_weight: "bold",
-                                "{label_text}"
+                if is_background {
+                    g {
+                        // 虚线
+                        line {
+                            x1: "{distance}",
+                            y1: "0",
+                            x2: "{distance}",
+                            y2: "100%",
+                            stroke: "#3b82f6",
+                            stroke_width: "3",
+                            stroke_dasharray: "8,4",
+                        }
+                        // 半透明区域
+                        rect {
+                            x: "{distance - 2}",
+                            y: "0",
+                            width: "4",
+                            height: "100%",
+                            fill: "rgba(59, 130, 246, 0.2)",
+                        }
+                        // 标签背景
+                        {
+                            let label_text = format!("← {}px", distance);
+                            let label_width = label_text.len() as i32 * 8 + 10;
+                            rsx! {
+                                rect {
+                                    x: "{distance + 5}",
+                                    y: "10",
+                                    width: "{label_width}",
+                                    height: "22",
+                                    fill: "#3b82f6",
+                                    rx: "4",
+                                }
+                                text {
+                                    x: "{distance + 10}",
+                                    y: "26",
+                                    fill: "white",
+                                    font_size: "14",
+                                    font_weight: "bold",
+                                    "{label_text}"
+                                }
                             }
                         }
                     }
@@ -897,48 +1083,27 @@ fn AnnotationLayer(response: ApiResponse, image_id: String, is_background: bool)
             // 绘制旋转角度指示（仅单图旋转，双图旋转用叠加显示）
             if let Some(angle) = response.inner_angle {
                 if !is_background && response.distance.is_none() && response.objects.is_none() && response.targets.is_none() {
+                    // API 返回的角度直接显示（逆时针为正）
                     {
-                        // API 返回的角度直接显示（逆时针为正）
                         let angle_text = format!("↺ {:.1}°", angle);
                         rsx! {
                             g {
-                                // 旋转方向指示弧线（逆时针）
-                                path {
-                                    d: "M 240,140 A 40,40 0 0,0 200,100",
-                                    fill: "none",
-                                    stroke: "#8b5cf6",
-                                    stroke_width: "4",
-                                    stroke_linecap: "round",
-                                }
-                                // 箭头（逆时针方向）
-                                polygon {
-                                    points: "200,100 205,105 197,103",
-                                    fill: "#8b5cf6",
-                                }
-                                // 中心点
-                                circle {
-                                    cx: "200",
-                                    cy: "150",
-                                    r: "6",
-                                    fill: "#8b5cf6",
-                                }
-                                // 角度标签背景
+                                // 角度标签背景（动态位置，显示在左上角）
                                 rect {
-                                    x: "165",
-                                    y: "20",
-                                    width: "70",
-                                    height: "24",
-                                    fill: "#8b5cf6",
-                                    rx: "4",
+                                    x: "10",
+                                    y: "10",
+                                    width: "{(angle_text.len() as i32 * 10 + 20).max(110)}",
+                                    height: "32",
+                                    fill: "rgba(139, 92, 246, 0.9)",
+                                    rx: "6",
                                 }
                                 // 角度标签文字
                                 text {
-                                    x: "200",
-                                    y: "37",
+                                    x: "20",
+                                    y: "32",
                                     fill: "white",
-                                    font_size: "14",
+                                    font_size: "18",
                                     font_weight: "bold",
-                                    text_anchor: "middle",
                                     "{angle_text}"
                                 }
                             }
@@ -947,60 +1112,210 @@ fn AnnotationLayer(response: ApiResponse, image_id: String, is_background: bool)
                 }
             }
             
-            // 绘制旋转目标位置（AntiCAP 单图旋转的 target 坐标）
-            if let Some(ref result) = response.result {
-                if let Some(target_array) = result.as_array() {
-                    if target_array.len() == 2 {
-                        if let (Some(x), Some(y)) = (target_array[0].as_f64(), target_array[1].as_f64()) {
+            // 绘制 result.target 边界框（AntiCAP 缺口滑块）- 显示在背景图上
+            if let Some(target_array) = &target_array_opt {
+                if target_array.len() == 4 && is_background {
+                    if let (Some(x1), Some(y1), Some(x2), Some(y2)) = (
+                        target_array[0].as_f64(),
+                        target_array[1].as_f64(),
+                        target_array[2].as_f64(),
+                        target_array[3].as_f64(),
+                    ) {
+                        {
+                            let x1_i32 = x1 as i32;
+                            let y1_i32 = y1 as i32;
+                            let x2_i32 = x2 as i32;
+                            let y2_i32 = y2 as i32;
+                            let width = x2_i32 - x1_i32;
+                            let height = y2_i32 - y1_i32;
+                            rsx! {
+                                g {
+                                    // 边界框
+                                    rect {
+                                        x: "{x1_i32}",
+                                        y: "{y1_i32}",
+                                        width: "{width}",
+                                        height: "{height}",
+                                        fill: "none",
+                                        stroke: "#3b82f6",
+                                        stroke_width: "3",
+                                        rx: "4",
+                                    }
+                                    // 半透明填充
+                                    rect {
+                                        x: "{x1_i32}",
+                                        y: "{y1_i32}",
+                                        width: "{width}",
+                                        height: "{height}",
+                                        fill: "rgba(59, 130, 246, 0.2)",
+                                    }
+                                    // 标签背景
+                                    rect {
+                                        x: "{x1_i32}",
+                                        y: "{y1_i32 - 28}",
+                                        width: "200",
+                                        height: "24",
+                                        fill: "#3b82f6",
+                                        rx: "4",
+                                    }
+                                    // 标签文字
+                                    text {
+                                        x: "{x1_i32 + 5}",
+                                        y: "{y1_i32 - 10}",
+                                        fill: "white",
+                                        font_size: "14",
+                                        font_weight: "bold",
+                                        "缺口位置: [{x1_i32},{y1_i32},{x2_i32},{y2_i32}]"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if target_array.len() == 2 && !is_background {
+                    // 点坐标格式 [x, y] - AntiCAP 阴影滑块或单图旋转（显示在主图上）
+                    if let (Some(x), Some(y)) = (target_array[0].as_f64(), target_array[1].as_f64()) {
+                        {
+                            let x_i32 = x as i32;
+                            let y_i32 = y as i32;
+                            rsx! {
+                                g {
+                                    // 目标位置十字标记
+                                    line {
+                                        x1: "{x_i32 - 15}",
+                                        y1: "{y_i32}",
+                                        x2: "{x_i32 + 15}",
+                                        y2: "{y_i32}",
+                                        stroke: "#ef4444",
+                                        stroke_width: "3",
+                                    }
+                                    line {
+                                        x1: "{x_i32}",
+                                        y1: "{y_i32 - 15}",
+                                        x2: "{x_i32}",
+                                        y2: "{y_i32 + 15}",
+                                        stroke: "#ef4444",
+                                        stroke_width: "3",
+                                    }
+                                    // 目标圆圈
+                                    circle {
+                                        cx: "{x_i32}",
+                                        cy: "{y_i32}",
+                                        r: "20",
+                                        fill: "none",
+                                        stroke: "#ef4444",
+                                        stroke_width: "2",
+                                    }
+                                    // 坐标标签
+                                    rect {
+                                        x: "{x_i32 + 25}",
+                                        y: "{y_i32 - 12}",
+                                        width: "100",
+                                        height: "24",
+                                        fill: "#ef4444",
+                                        rx: "4",
+                                    }
+                                    text {
+                                        x: "{x_i32 + 30}",
+                                        y: "{y_i32 + 5}",
+                                        fill: "white",
+                                        font_size: "12",
+                                        font_weight: "bold",
+                                        "({x_i32}, {y_i32})"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 绘制普通验证码或算术验证码的文本结果
+            if response.distance.is_none() && response.objects.is_none() && response.targets.is_none() && response.inner_angle.is_none() && target_array_opt.is_none() {
+                if let Some(ref result) = response.result {
+                    // 普通验证码或算术验证码结果 - 在图片上显示文本结果
+                    if let Some(result_str) = result.as_str() {
+                        if !result_str.is_empty() {
                             {
-                                let x_i32 = x as i32;
-                                let y_i32 = y as i32;
+                                let label_text = format!("识别结果: {}", result_str);
                                 rsx! {
                                     g {
-                                        // 目标位置十字标记
-                                        line {
-                                            x1: "{x_i32 - 15}",
-                                            y1: "{y_i32}",
-                                            x2: "{x_i32 + 15}",
-                                            y2: "{y_i32}",
-                                            stroke: "#ef4444",
-                                            stroke_width: "3",
-                                        }
-                                        line {
-                                            x1: "{x_i32}",
-                                            y1: "{y_i32 - 15}",
-                                            x2: "{x_i32}",
-                                            y2: "{y_i32 + 15}",
-                                            stroke: "#ef4444",
-                                            stroke_width: "3",
-                                        }
-                                        // 目标圆圈
-                                        circle {
-                                            cx: "{x_i32}",
-                                            cy: "{y_i32}",
-                                            r: "20",
-                                            fill: "none",
-                                            stroke: "#ef4444",
-                                            stroke_width: "2",
-                                        }
-                                        // 坐标标签
+                                        // 结果文本背景
                                         rect {
-                                            x: "{x_i32 + 25}",
-                                            y: "{y_i32 - 12}",
-                                            width: "100",
-                                            height: "24",
-                                            fill: "#ef4444",
-                                            rx: "4",
+                                            x: "10",
+                                            y: "10",
+                                            width: "{(label_text.len() as i32 * 10 + 20).max(180)}",
+                                            height: "32",
+                                            fill: "rgba(16, 185, 129, 0.9)",
+                                            rx: "6",
                                         }
+                                        // 结果文本
                                         text {
-                                            x: "{x_i32 + 30}",
-                                            y: "{y_i32 + 5}",
+                                            x: "20",
+                                            y: "32",
                                             fill: "white",
-                                            font_size: "12",
+                                            font_size: "18",
                                             font_weight: "bold",
-                                            "({x_i32}, {y_i32})"
+                                            "{label_text}"
                                         }
                                     }
+                                }
+                            }
+                        }
+                    } else if let Some(result_num) = result.as_f64() {
+                        // 算术验证码结果（数字）
+                        {
+                            let result_text = format!("计算结果: {:.2}", result_num);
+                            rsx! {
+                                g {
+                                    // 结果文本背景
+                                    rect {
+                                        x: "10",
+                                        y: "10",
+                                        width: "{(result_text.len() as i32 * 10 + 20).max(150)}",
+                                        height: "32",
+                                        fill: "rgba(16, 185, 129, 0.9)",
+                                        rx: "6",
+                                    }
+                                    // 结果文本
+                                    text {
+                                        x: "20",
+                                        y: "32",
+                                        fill: "white",
+                                        font_size: "18",
+                                        font_weight: "bold",
+                                        "{result_text}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 绘制相似度标注（图片相似度比较）
+            if let Some(similarity) = response.similarity {
+                if response.distance.is_none() && response.objects.is_none() && response.targets.is_none() && response.inner_angle.is_none() && response.result.is_none() {
+                    {
+                        let similarity_text = format!("相似度: {:.1}%", similarity * 100.0);
+                        rsx! {
+                            g {
+                                // 相似度文本背景
+                                rect {
+                                    x: "10",
+                                    y: "10",
+                                    width: "{(similarity_text.len() as i32 * 10 + 20).max(150)}",
+                                    height: "32",
+                                    fill: "rgba(139, 92, 246, 0.9)",
+                                    rx: "6",
+                                }
+                                // 相似度文本
+                                text {
+                                    x: "20",
+                                    y: "32",
+                                    fill: "white",
+                                    font_size: "18",
+                                    font_weight: "bold",
+                                    "{similarity_text}"
                                 }
                             }
                         }
