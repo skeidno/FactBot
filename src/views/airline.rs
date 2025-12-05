@@ -22,7 +22,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "AA",
         name: "美国航空（现金）",
-        url: "https://www.americanairlines.cn/intl/cn/index.jsp?locale=zh_CN",
         request_preview: r#"{
     "TRIP_TYPE": "O",
     "B_LOCATION_1": "TYO",
@@ -33,7 +32,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "B2",
         name: "白俄罗斯航空",
-        url: "https://en.belavia.by/",
         request_preview: r#"{
     "currency": "BYN",
     "segments": [{"departure": {"iata": "MSQ"}, "arrival": {"iata": "NOJ"}}],
@@ -43,7 +41,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "FS",
         name: "飞狮航空",
-        url: "https://www.flyarystan.com/",
         request_preview: r#"{
     "tripType": "ONE_WAY",
     "depPort": "ALA",
@@ -55,7 +52,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "VJ",
         name: "越捷航空",
-        url: "https://www.vietjetair.com/zh-CN/",
         request_preview: r#"{
     "currency": "AUD",
     "departurePlace": "HAN",
@@ -67,7 +63,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "VA",
         name: "维珍航空",
-        url: "https://www.virginaustralia.com/au/en/",
         request_preview: r#"{
     "cabinClass": "First",
     "awardBooking": true,
@@ -78,7 +73,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "OZ",
         name: "韩亚航空（里程票）",
-        url: "https://flyasiana.com/C/US/EN/index",
         request_preview: r#"{
     "bizType": "RED",
     "tripType": "OW",
@@ -90,7 +84,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "CM",
         name: "巴拿马航空（里程票）",
-        url: "https://www.copaair.com/en-gs/",
         request_preview: r#"{
     "adults": 1,
     "departureAirport1": "LAX",
@@ -101,7 +94,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "CM_CASH",
         name: "巴拿马航空（现金票）",
-        url: "https://www.copaair.com/en-gs/",
         request_preview: r#"{
     "departureAirport1": "ASU",
     "arrivalAirport1": "PTY",
@@ -112,7 +104,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "U6",
         name: "乌拉尔航空",
-        url: "https://www.uralairlines.ru/en/",
         request_preview: r#"{
     "orig": "BJS",
     "dest": "SVX",
@@ -123,7 +114,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "S7",
         name: "西伯利亚航空",
-        url: "https://www.s7.ru/",
         request_preview: r#"{
     "currency": "RUB",
     "origin": "MOW",
@@ -134,7 +124,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "IA",
         name: "伊拉克航空",
-        url: "http://www.iraqiairways.com.iq/",
         request_preview: r#"{
     "originLocationCode": "EBL",
     "destinationLocationCode": "BGW",
@@ -144,7 +133,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "SU",
         name: "俄罗斯国际航空",
-        url: "https://www.aeroflot.ru/",
         request_preview: r#"{
     "origin": "ABA",
     "destination": "MOW",
@@ -155,7 +143,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "N4",
         name: "北风航空",
-        url: "https://nordwindairlines.ru/ru",
         request_preview: r#"{
     "departure": {"iata": "KZN"},
     "arrival": {"iata": "MOW"},
@@ -165,7 +152,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "DD",
         name: "皇雀航空",
-        url: "https://www.nokair.com/",
         request_preview: r#"{
     "fromAirport": "DMK",
     "toAirport": "CNX",
@@ -176,7 +162,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "MH",
         name: "马来西亚国际航空",
-        url: "https://www.malaysiaairlines.com/cn/zh_CN/home.html",
         request_preview: r#"{
     "originLocationCode": "PKX",
     "destinationLocationCode": "JED",
@@ -186,7 +171,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
     AirlineOption {
         code: "5J",
         name: "宿务航空",
-        url: "https://www.cebupacificair.com/en-PH/",
         request_preview: r#"{
     "origin": "ICN",
     "destination": "KUL",
@@ -199,8 +183,6 @@ const AIRLINE_OPTIONS: &[AirlineOption] = &[
 struct AirlineOption {
     code: &'static str,
     name: &'static str,
-    #[allow(dead_code)]
-    url: &'static str,
     request_preview: &'static str,
 }
 

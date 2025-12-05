@@ -118,6 +118,41 @@ struct AnticapCompareRequest {
     image2: String,
 }
 
+/// 创建带超时的 HTTP 客户端
+fn create_http_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .connect_timeout(std::time::Duration::from_secs(10))
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new())
+}
+
+/// 验证输入参数
+fn validate_image_base64(base64_str: &str) -> Result<(), String> {
+    // 移除 data:image 前缀（如果有）
+    let base64_data = base64_str
+        .strip_prefix("data:image/")
+        .and_then(|s| s.split(';').nth(1))
+        .and_then(|s| s.strip_prefix("base64,"))
+        .unwrap_or(base64_str);
+    
+    // 检查长度（Base64 编码后的图片应该有一定长度）
+    if base64_data.is_empty() {
+        return Err("Base64 数据不能为空".to_string());
+    }
+    
+    if base64_data.len() > 10 * 1024 * 1024 {
+        return Err("图片数据过大，最大支持 10MB".to_string());
+    }
+    
+    // 验证 Base64 格式
+    if base64_data.chars().any(|c| !c.is_alphanumeric() && c != '+' && c != '/' && c != '=') {
+        return Err("无效的 Base64 格式".to_string());
+    }
+    
+    Ok(())
+}
+
 /// 验证码识别接口
 async fn solve_captcha(
     Json(payload): Json<CaptchaSolveRequest>,
@@ -128,6 +163,35 @@ async fn solve_captcha(
         payload.image_base64.len(),
         if payload.reference_base64.is_some() { "有" } else { "无" }
     );
+
+    // 验证输入
+    if let Err(e) = validate_image_base64(&payload.image_base64) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(CaptchaSolveResponse {
+                success: false,
+                message: None,
+                result: None,
+                error: Some(e),
+                coordinates: None,
+            }),
+        );
+    }
+    
+    if let Some(ref ref_base64) = payload.reference_base64 {
+        if let Err(e) = validate_image_base64(ref_base64) {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(CaptchaSolveResponse {
+                    success: false,
+                    message: None,
+                    result: None,
+                    error: Some(format!("参考图验证失败: {}", e)),
+                    coordinates: None,
+                }),
+            );
+        }
+    }
 
     // 解码 base64 图片
     let image_bytes = match base64::engine::general_purpose::STANDARD.decode(&payload.image_base64)
@@ -198,8 +262,8 @@ async fn recognize_ocr(image_bytes: &[u8]) -> CaptchaSolveResponse {
     // 转换为 base64
     let image_base64 = base64::engine::general_purpose::STANDARD.encode(image_bytes);
 
-    // 调用 API
-    let client = reqwest::Client::new();
+    // 调用 API（带超时）
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/ocr", API_BASE_URL))
         .json(&serde_json::json!({
@@ -265,7 +329,7 @@ async fn recognize_ocr_old(image_bytes: &[u8]) -> CaptchaSolveResponse {
 
     let image_base64 = base64::engine::general_purpose::STANDARD.encode(image_bytes);
 
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/ocr", API_BASE_URL))
         .json(&serde_json::json!({
@@ -330,7 +394,7 @@ async fn recognize_ocr_probability(image_bytes: &[u8]) -> CaptchaSolveResponse {
 
     let image_base64 = base64::engine::general_purpose::STANDARD.encode(image_bytes);
 
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/ocr", API_BASE_URL))
         .json(&serde_json::json!({
@@ -395,7 +459,7 @@ async fn recognize_detection(image_bytes: &[u8]) -> CaptchaSolveResponse {
 
     let image_base64 = base64::engine::general_purpose::STANDARD.encode(image_bytes);
 
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/click", API_BASE_URL))
         .json(&serde_json::json!({
@@ -483,7 +547,18 @@ async fn recognize_slide_match(image_bytes: &[u8], background_bytes: Option<&[u8
         };
     }
 
-    let bg_bytes = background_bytes.unwrap();
+    let bg_bytes = match background_bytes {
+        Some(bytes) => bytes,
+        None => {
+            return CaptchaSolveResponse {
+                success: false,
+                message: None,
+                result: None,
+                error: Some("背景图数据缺失".to_string()),
+                coordinates: None,
+            };
+        }
+    };
 
     // 智能检测：如果主图比背景图大，自动交换
     let (target, background) = if image_bytes.len() > bg_bytes.len() {
@@ -497,7 +572,7 @@ async fn recognize_slide_match(image_bytes: &[u8], background_bytes: Option<&[u8
     let target_base64 = base64::engine::general_purpose::STANDARD.encode(target);
     let bg_base64 = base64::engine::general_purpose::STANDARD.encode(background);
 
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/slide", API_BASE_URL))
         .json(&serde_json::json!({
@@ -578,12 +653,23 @@ async fn recognize_slide_comparison(image_bytes: &[u8], background_bytes: Option
         };
     }
 
-    let bg_bytes = background_bytes.unwrap();
+    let bg_bytes = match background_bytes {
+        Some(bytes) => bytes,
+        None => {
+            return CaptchaSolveResponse {
+                success: false,
+                message: None,
+                result: None,
+                error: Some("背景图数据缺失".to_string()),
+                coordinates: None,
+            };
+        }
+    };
 
     let target_base64 = base64::engine::general_purpose::STANDARD.encode(image_bytes);
     let bg_base64 = base64::engine::general_purpose::STANDARD.encode(bg_bytes);
 
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/anticap/slide", API_BASE_URL))
         .json(&serde_json::json!({
@@ -659,7 +745,7 @@ async fn recognize_slide_comparison(image_bytes: &[u8], background_bytes: Option
 
 /// ddddocr - 普通验证码识别
 async fn ddddocr_ocr(Json(payload): Json<DdddocrOcrRequest>) -> (StatusCode, Json<Value>) {
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/ocr", API_BASE_URL))
         .json(&serde_json::json!({
@@ -687,7 +773,7 @@ async fn ddddocr_det(Json(payload): Json<serde_json::Value>) -> (StatusCode, Jso
         None => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"detail": "缺少 image 参数"}))),
     };
 
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/det", API_BASE_URL))
         .json(&serde_json::json!({
@@ -709,7 +795,7 @@ async fn ddddocr_det(Json(payload): Json<serde_json::Value>) -> (StatusCode, Jso
 
 /// ddddocr - 滑块验证码
 async fn ddddocr_slide(Json(payload): Json<DdddocrSlideRequest>) -> (StatusCode, Json<Value>) {
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/slide", API_BASE_URL))
         .json(&serde_json::json!({
@@ -737,7 +823,7 @@ async fn ddddocr_click(Json(payload): Json<DdddocrClickRequest>) -> (StatusCode,
         question: payload.question,
     };
     
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/click", API_BASE_URL))
         .json(&api_request)
@@ -758,7 +844,7 @@ async fn ddddocr_click(Json(payload): Json<DdddocrClickRequest>) -> (StatusCode,
 /// AntiCAP - 通用 OCR 识别
 /// 支持类型: ocr, math, detection_icon, detection_text, single_rotate
 async fn anticap_ocr(Json(payload): Json<AnticapOcrRequest>) -> (StatusCode, Json<Value>) {
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/anticap/ocr", API_BASE_URL))
         .json(&serde_json::json!({
@@ -782,7 +868,7 @@ async fn anticap_ocr(Json(payload): Json<AnticapOcrRequest>) -> (StatusCode, Jso
 /// AntiCAP - 滑块验证码
 /// 支持模式: match (匹配), comparison (比对)
 async fn anticap_slide(Json(payload): Json<AnticapSlideRequest>) -> (StatusCode, Json<Value>) {
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/anticap/slide", API_BASE_URL))
         .json(&serde_json::json!({
@@ -807,7 +893,7 @@ async fn anticap_slide(Json(payload): Json<AnticapSlideRequest>) -> (StatusCode,
 /// AntiCAP - 双图旋转验证码
 /// 返回内外圈的旋转角度
 async fn anticap_rotate(Json(payload): Json<AnticapRotateRequest>) -> (StatusCode, Json<Value>) {
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/anticap/rotate", API_BASE_URL))
         .json(&serde_json::json!({
@@ -831,7 +917,7 @@ async fn anticap_rotate(Json(payload): Json<AnticapRotateRequest>) -> (StatusCod
 /// AntiCAP - 图片相似度对比
 /// 返回两张图片的相似度分数
 async fn anticap_compare(Json(payload): Json<AnticapCompareRequest>) -> (StatusCode, Json<Value>) {
-    let client = reqwest::Client::new();
+    let client = create_http_client();
     let response = match client
         .post(format!("{}/api/anticap/compare", API_BASE_URL))
         .json(&serde_json::json!({

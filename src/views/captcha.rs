@@ -700,7 +700,7 @@ fn format_result(resp: ApiResponse) -> String {
         if let Some(result_array) = result.as_array() {
             // 如果是数组（图标检测、文字检测的结果）
             output.push_str(&format!("📝 检测到 {} 个目标:\n", result_array.len()));
-            for (_idx, item) in result_array.iter().take(5).enumerate() {
+            for item in result_array.iter().take(5) {
                 if let Some(item_obj) = item.as_object() {
                     let bbox_opt = item_obj.get("bbox")
                         .or_else(|| item_obj.get("box"))
@@ -786,7 +786,7 @@ fn AnnotationLayer(response: ApiResponse, image_id: String, is_background: bool)
     let result_objects: Vec<(i32, i32, i32, i32, String)> = if response.objects.is_none() {
         if let Some(ref result) = response.result {
             if let Some(result_array) = result.as_array() {
-                result_array.iter().enumerate().filter_map(|(_idx, item)| {
+                result_array.iter().filter_map(|item| {
                     if let Some(item_obj) = item.as_object() {
                         let bbox_opt = item_obj.get("bbox")
                             .or_else(|| item_obj.get("box"))

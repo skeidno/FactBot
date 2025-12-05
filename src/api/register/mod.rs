@@ -15,13 +15,6 @@ pub fn routes() -> Router {
 #[derive(Debug, Deserialize)]
 struct RegisterRequest {
     platform: String,
-    #[allow(dead_code)]
-    email: Option<String>,
-    #[allow(dead_code)]
-    phone: Option<String>,
-    #[serde(default)]
-    #[allow(dead_code)]
-    use_proxy: bool,
 }
 
 #[derive(Debug, Serialize)]

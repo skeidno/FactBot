@@ -74,6 +74,11 @@ impl TaskManager {
         &self.logger
     }
     
+    /// 获取任务配置的引用
+    pub fn config(&self) -> &TaskConfig {
+        &self.config
+    }
+    
     /// 构建 HTTP 客户端（带 TLS 指纹和浏览器模拟）
     /// 
     /// 这是一个占位符实现，实际使用时需要集成 wreq::Client
@@ -117,24 +122,6 @@ impl TaskManager {
     ///     #[cfg(not(any(env = "product", env = "beta")))]
     ///     {
     ///         builder = builder.cert_verification(false);
-    ///     }
-    ///     
-    ///     let client = builder.build()?;
-    ///     Ok(client)
-    /// }
-    /// ```
-    #[allow(dead_code)]
-    pub fn build_client_info(&self) -> String {
-        format!(
-            "Client Config: emulation={}, timeout={}s, proxy={}, cookies={}, redirect={}, verify_cert={}",
-            self.config.emulation.as_str(),
-            self.config.timeout.as_secs(),
-            if self.get_ip().is_some() { "enabled" } else { "disabled" },
-            if self.config.enable_cookie_management { "enabled" } else { "disabled" },
-            if self.config.allow_redirect { "enabled" } else { "disabled" },
-            if self.config.verify_cert { "enabled" } else { "disabled" }
-        )
-    }
     
     /// 记录调试日志
     pub fn debug(&self, message: &str) {

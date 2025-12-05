@@ -19,9 +19,6 @@ struct AirlineQueryRequest {
     from: String,
     to: String,
     date: String,
-    #[serde(default)]
-    #[allow(dead_code)]
-    passengers: u32,
 }
 
 #[derive(Debug, Serialize)]

@@ -71,7 +71,13 @@ fn main() {
 
     // 启动 Web API 服务器（后台线程）
     std::thread::spawn(|| {
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(runtime) => runtime,
+            Err(e) => {
+                eprintln!("无法创建 Tokio 运行时: {}", e);
+                return;
+            }
+        };
         rt.block_on(async {
             if let Err(e) = fact_bot::api::start_server().await {
                 eprintln!("Web API 服务器启动失败: {}", e);
@@ -81,8 +87,21 @@ fn main() {
 
     // 加载图标
     let icon_bytes = include_bytes!("../assets/favicon.ico");
-    let icon = Icon::from_rgba(load_icon_rgba(icon_bytes), 256, 256)
-        .expect("Failed to load icon");
+    let icon_rgba = match load_icon_rgba(icon_bytes) {
+        Ok(rgba) => rgba,
+        Err(e) => {
+            eprintln!("警告: 无法加载图标: {}", e);
+            // 使用默认图标或继续运行
+            return;
+        }
+    };
+    let icon = match Icon::from_rgba(icon_rgba, 256, 256) {
+        Ok(icon) => icon,
+        Err(e) => {
+            eprintln!("警告: 无法创建图标: {}", e);
+            return;
+        }
+    };
 
     let window = WindowBuilder::new()
         .with_title("FactBot 面板")
@@ -103,17 +122,17 @@ fn main() {
 }
 
 #[cfg(feature = "desktop")]
-fn load_icon_rgba(icon_bytes: &[u8]) -> Vec<u8> {
+fn load_icon_rgba(icon_bytes: &[u8]) -> Result<Vec<u8>, String> {
     use image::ImageReader;
     use std::io::Cursor;
     
     let img = ImageReader::new(Cursor::new(icon_bytes))
         .with_guessed_format()
-        .expect("Failed to guess icon format")
+        .map_err(|e| format!("无法识别图标格式: {}", e))?
         .decode()
-        .expect("Failed to decode icon");
+        .map_err(|e| format!("无法解码图标: {}", e))?;
     
-    img.to_rgba8().into_raw()
+    Ok(img.to_rgba8().into_raw())
 }
 
 /// 非桌面平台：保持原有启动方式
